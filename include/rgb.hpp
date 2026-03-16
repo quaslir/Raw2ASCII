@@ -5,7 +5,7 @@
 struct RGB {
     uint8_t r, g, b;
 
-    void printPixel(std::string & ss) const;
+    void printPixel(std::stringstream & ss) const;
 };
 
 #pragma pack(pop)
