@@ -10,7 +10,7 @@
 #include <fstream>
 Image::Image(const std::string & pathToImage, const utils::Options & options) : data(nullptr, stbi_image_free) {
 
-unsigned char * raw = stbi_load(pathToImage.c_str(), &width, &height,&channels, 3);
+unsigned char * raw = stbi_load(pathToImage.c_str(), &width, &height,&channels, 4);
 
 if(!raw) {
     throw std::runtime_error("Failed to load image " + pathToImage);
