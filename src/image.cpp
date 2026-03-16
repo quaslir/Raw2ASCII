@@ -7,7 +7,7 @@
 #include <sstream>
 #include <sys/ioctl.h>
 #include <unistd.h>
-Image::Image(const std::string & pathToImage) : data(nullptr, stbi_image_free) {
+Image::Image(const std::string & pathToImage, const utils::Options & options) : data(nullptr, stbi_image_free) {
 
 unsigned char * raw = stbi_load(pathToImage.c_str(), &width, &height,&channels, 3);
 
@@ -17,6 +17,8 @@ if(!raw) {
 
 data.reset(reinterpret_cast<RGB*>(raw));
 
+opts = utils::Options(options);
+
 }
 
 void Image::renderImage(void) const {
@@ -25,12 +27,10 @@ if(!data) return;
 struct winsize window;
 ioctl(STDOUT_FILENO, TIOCGWINSZ, &window);
 
-int stepX = 17;
-int stepY = 34;
+int stepX = width / opts.targetWidth;
+int stepY = height / opts.targetHeight;
 
 std::stringstream ss;
-
-
 
 for(int y = 0; y < height; y += stepY) {
     for(int x = 0; x < width; x += stepX) {
