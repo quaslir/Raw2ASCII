@@ -10,6 +10,9 @@ class Image {
     int width, height, channels;
     StbPtr data;
     utils::Options opts;
+
+
+    void saveToFile(std::stringstream & ss) const;
     public:
     Image(const std::string & pathToImage, const utils::Options & options);
     void renderImage(void) const;

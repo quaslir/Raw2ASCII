@@ -7,6 +7,7 @@
 #include <sstream>
 #include <sys/ioctl.h>
 #include <unistd.h>
+#include <fstream>
 Image::Image(const std::string & pathToImage, const utils::Options & options) : data(nullptr, stbi_image_free) {
 
 unsigned char * raw = stbi_load(pathToImage.c_str(), &width, &height,&channels, 3);
@@ -38,5 +39,18 @@ for(int y = 0; y < height; y += stepY) {
     }
     ss << "\n";
 }
+
+
+
+if(opts.outputPath.empty())
 std::cout << ss.str();
+else {
+    saveToFile(ss);
+}
+}
+
+void Image::saveToFile(std::stringstream & ss) const {
+std::ofstream file(opts.outputPath);
+
+file << ss.str();
 }
