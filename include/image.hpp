@@ -1,15 +1,16 @@
 #pragma once
 #include <string>
 #include <memory>
+#include "rgb.hpp"
 
-using SdbPtr = std::unique_ptr<unsigned char[], void(*)(void*)>;
-
+extern "C" void stbi_image_free(void*);
 class Image {
+    using StbPtr = std::unique_ptr<RGB[], decltype(&stbi_image_free)>;
     private:
     int width, height, channels;
-    SdbPtr data;
+    StbPtr data;
 
     public:
     Image(const std::string & pathToImage);
-    ~Image();
+    void renderImage(void) const;
 };
