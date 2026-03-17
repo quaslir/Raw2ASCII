@@ -4,9 +4,9 @@
 #include <string>
 extern "C" void stbi_image_free(void*);
 struct GifFrame{
-using StbPtr = std::unique_ptr<RGB[], decltype(&stbi_image_free)>;
-StbPtr data;
+std::vector<RGB> frame;
 int delay;
+
 };
 
 class Gif {

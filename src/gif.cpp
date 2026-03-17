@@ -26,9 +26,33 @@ return buffer;
 
 }
 
-Gif::Gif(const std::string &path) {
+Gif::Gif(const std::string &path){
     int w, h, count, channels;
     int * delays = nullptr;
+    std::vector<unsigned char> buffer = readGif(path);
+    unsigned char * raw = stbi_load_gif_from_memory(buffer.data(), static_cast<int>(buffer.size())
+    , &delays, &w, &h, &count, &channels, 4);   
 
+    if(!raw) {
+        throw std::runtime_error("Failed to load GIF: " + path);
+    }
 
+    width = w;
+    height = h;
+
+size_t frameSize = width * height * 4;
+
+data.resize(count);
+
+for(int i = 0; i < count; i++) {
+    unsigned char * framePtr = raw + (i * frameSize);
+
+    data[i].delay = delays[i];
+    data[i].frame.resize(width * height);
+    std::copy(framePtr, framePtr + frameSize, data[i].frame.data());
+
+    stbi_image_free(raw);
+
+    stbi_image_free(delays);
+}
 };

@@ -14,17 +14,17 @@ return !(*this == other);
 
 void RGB::printPixel(std::stringstream & ss, const RGB & bottom, RGB & prevTop, RGB & prevBottom) const {
 
-    if(this->alpha == 0 && bottom.alpha == 0) {
+    if(this->alpha < 96 && bottom.alpha < 96) {
         ss << " ";
         return;
     }
 
-        int Rt = (this->alpha > 128) ? r : 0;
-        int Gt = (this->alpha > 128) ? g : 0;
-        int Bt = (this->alpha > 128) ? b : 0;
-        int Rb = (this->alpha > 128) ? bottom.r : 0;
-        int Gb = (this->alpha > 128) ? bottom.g : 0;
-        int Bb = (this->alpha > 128) ? bottom.b : 0;
+        int Rt = (this->alpha > 96) ? r : 0;
+        int Gt = (this->alpha > 96) ? g : 0;
+        int Bt = (this->alpha > 96) ? b : 0;
+        int Rb = (this->alpha > 96) ? bottom.r : 0;
+        int Gb = (this->alpha > 96) ? bottom.g : 0;
+        int Bb = (this->alpha > 96) ? bottom.b : 0;
 
         char buffer[128];
 
