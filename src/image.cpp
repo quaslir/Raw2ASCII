@@ -25,19 +25,25 @@ opts = utils::Options(options);
 void Image::renderImage(void) const {
 if(!data) return;
 
-struct winsize window;
-ioctl(STDOUT_FILENO, TIOCGWINSZ, &window);
-
 int stepX = width / opts.targetWidth;
 int stepY = height / opts.targetHeight;
 
 std::stringstream ss;
 
-for(int y = 0; y < height; y += stepY) {
+
+
+for(int y = 0; y < height; y += stepY * 2) {
+    RGB prevTop = {0, 0, 0, 0};
+    RGB prevBottom = {0, 0, 0, 0};
     for(int x = 0; x < width; x += stepX) {
-        data[y * width + x].printPixel(ss);
+
+        const RGB& top = data[y * width + x];
+        int bottomIdx = (y + stepY < height) ? (y + stepY) : y;
+        const RGB& bottom = data[(bottomIdx) * width + x];
+
+       top.printPixel(ss, bottom, prevTop, prevBottom);
     }
-    ss << "\n";
+    ss << "\x1b[0m\n";
 }
 
 
