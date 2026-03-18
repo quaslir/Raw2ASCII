@@ -17,6 +17,8 @@ class Gif {
     utils::Options opts;
 
     std::vector<unsigned char> readGif(const std::string &path);
+    
     public:
-    Gif(const std::string & path);
+    Gif(const std::string & path, const utils::Options & options);
+    void renderGif(void) const;
 };

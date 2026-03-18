@@ -18,7 +18,8 @@ int main(int argc, char * argv[]) {
 
     try {
         if(path.ends_with(".gif")) {
-            Gif gif (path);
+            Gif gif (path, opts);
+            gif.renderGif();
         } else {
     Image img(path, opts);
     img.renderImage();

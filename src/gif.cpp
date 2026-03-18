@@ -5,6 +5,9 @@
 #include <vector>
 #include <fstream>
 #include <cstring>
+#include <iostream>
+#include <thread>
+#include <chrono>
 std::vector<unsigned char> Gif::readGif(const std::string &path) {
 std::ifstream file(path, std::ios::binary | std::ios::ate);
 
@@ -25,7 +28,7 @@ return buffer;
 
 }
 
-Gif::Gif(const std::string &path){
+Gif::Gif(const std::string &path, const utils::Options & options){
     int w, h, count, channels;
     int * delays = nullptr;
     
@@ -56,4 +59,39 @@ for(int i = 0; i < count; i++) {
     stbi_image_free(raw);
 
     stbi_image_free(delays);
+
+    opts = options;
 };
+
+
+void Gif::renderGif(void) const {
+
+int stepX = width / opts.targetWidth;
+int stepY = height / opts.targetHeight;
+
+std::cout << "\033[2J\033[?25l";
+
+for(int i = 0; i < data.size(); i++) {
+    std::cout << "\033[H";
+    std::stringstream ss;
+
+    for(int y = 0; y < height; y += stepY * 2) {
+    RGB prevTop = {0, 0, 0, 0};
+    RGB prevBottom = {0, 0, 0, 0};
+    for(int x = 0; x < width; x += stepX) {
+
+        const RGB& top = data[i].frame[y * width + x];
+        int bottomIdx = (y + stepY < height) ? (y + stepY) : y;
+        const RGB& bottom = data[i].frame[(bottomIdx) * width + x];
+
+       top.printPixel(ss, bottom, prevTop, prevBottom);
+    }
+    ss << "\x1b[0m\n";
+}
+
+std::cout << ss.str();
+std::this_thread::sleep_for(std::chrono::milliseconds(data[i].delay));
+}
+
+std::cout << "\033[?25h" << std::endl;
+}
