@@ -1,16 +1,36 @@
 #include "rgb.hpp"
 #include <cstdio>
 #include <iostream>
-void RGB::printPixel(std::stringstream & ss) const {
-if(alpha == 0) {
-    ss << " ";
-    return;
+
+bool RGB::operator==(const RGB& other) const {
+if(this->r == other.r && this->g == other.g && this->b == other.b) return true;
+return false;
 }
 
-const static std::string ramp = " .:-=+*#%@";
-char symbol = ramp[alpha * (ramp.size() - 1) / 255];
-char buffer[64];
-std::snprintf(buffer, sizeof(buffer), "\x1b[38;2;%u;%u;%um%c\x1b[0m", r, g, b, symbol);
+bool RGB::operator!=(const RGB& other) const {
+return !(*this == other);
+}
 
-ss << buffer;
+
+void RGB::printPixel(std::stringstream & ss, const RGB & bottom, RGB & prevTop, RGB & prevBottom) const {
+
+    if(this->alpha < 96 && bottom.alpha < 96) {
+        ss << " ";
+        return;
+    }
+
+        int Rt = (this->alpha > 96) ? r : 0;
+        int Gt = (this->alpha > 96) ? g : 0;
+        int Bt = (this->alpha > 96) ? b : 0;
+        int Rb = (this->alpha > 96) ? bottom.r : 0;
+        int Gb = (this->alpha > 96) ? bottom.g : 0;
+        int Bb = (this->alpha > 96) ? bottom.b : 0;
+
+        char buffer[128];
+
+        std::snprintf(buffer, sizeof (buffer), "\033[38;2;%d;%d;%dm\033[48;2;%d;%d;%dm▀\033[0m",
+    Rt, Gt, Bt, Rb, Gb, Bb);
+
+    ss << buffer;
+
 }

@@ -3,28 +3,24 @@
 #include <exception>
 namespace utils{
 
-    Options::Options() {
+Options::Options() {
         targetWidth = 1;
         targetHeight = 1;
         fullscreen = false;
         outputPath = "";
     }
 
-    Options::Options(const Options & opts) {
-        targetWidth = opts.targetWidth;
-        targetHeight = opts.targetHeight;
-        fullscreen = opts.fullscreen;
-        outputPath = opts.outputPath;
-    }
-
-    Options Options::parse(int argc, char * argv[]) {
-        if(argc < 3) return *this;
+Options::Options(int argc, char * argv[]) {
+    parse(argc, argv);
+}
+    void Options::parse(int argc, char * argv[]) {
+        if(argc < 3) return;
         for(int i = 2; i < argc; i++) {
              std::string_view param(argv[i]);
-            bool longForm = param[1] == '-';
 
-             if((param.substr(0,2) == "-w") || (param.substr(0,8) == "--width=")) {
-                size_t index = longForm ? 8 : 2;
+
+             if((param.starts_with("-w")) || (param.starts_with("--width="))) {
+                size_t index = param.starts_with("-w") ? std::string{"-w"}.length() : std::string{"--width="}.length();
                 try {
                     int w = std::stoi(std::string{param.substr(index)});
                     targetWidth = w;
@@ -35,8 +31,8 @@ namespace utils{
                 }
              }
 
-             else if((param.substr(0,2) == "-h") || (param.substr(0, 9) == "--height=")) {
-                size_t index = longForm ? 9 : 2;
+             else if((param.starts_with("-h")) || (param.starts_with("--height"))) {
+                size_t index = param.starts_with("-h") ? std::string{"-h"}.length() : std::string{"--height="}.length();
                 try {
                     int h = std::stoi(std::string{param.substr(index)});
                     targetHeight = h;
@@ -47,15 +43,14 @@ namespace utils{
                 }
              }
 
-             else if(param.substr(0,5) == "--fit") {
+             else if(param.starts_with("--fit")) {
                 fullscreen = 1;
              }
 
-             else if((param.substr(0,2) == "-o") || (param.substr(0, 9) == "--output=")) {
-                size_t index = longForm ? 10 : 2;
+             else if((param.starts_with("-o")) || (param.starts_with("--output="))) {
+                size_t index = param.starts_with("-o") ? std::string{"-o"}.length() : std::string{"--output="}.length();
                 outputPath = param.substr(index);
              }
         }
-       return *this;
     }
 }
