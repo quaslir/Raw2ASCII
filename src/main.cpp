@@ -1,5 +1,6 @@
 #include "image.hpp"
 #include "utils.hpp"
+#include "fileManager.hpp"
 #include "gif.hpp"
 #include <string>
 #include <exception>
@@ -15,17 +16,6 @@ int main(int argc, char * argv[]) {
 
     utils::Options opts (argc, argv);
 
-
-    try {
-        if(path.ends_with(".gif")) {
-            Gif gif (path, opts);
-            gif.renderGif();
-        } else {
-    Image img(path, opts);
-    img.renderImage();
-        }
-    } catch(const std::exception & err) {
-        std::cerr << err.what() << std::endl;
-    }
+    ext::FileManager manager(path, argc, argv);
     return 0;
 }

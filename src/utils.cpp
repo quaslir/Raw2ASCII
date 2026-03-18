@@ -1,19 +1,16 @@
 #include "utils.hpp"
 #include <iostream>
 #include <exception>
+#include <sys/ioctl.h>
+#include <unistd.h>
 namespace utils{
 
-Options::Options() {
-        targetWidth = 1;
-        targetHeight = 1;
-        fullscreen = false;
-        outputPath = "";
-    }
 
 Options::Options(int argc, char * argv[]) {
     parse(argc, argv);
 }
     void Options::parse(int argc, char * argv[]) {
+
         if(argc < 3) return;
         for(int i = 2; i < argc; i++) {
              std::string_view param(argv[i]);
@@ -44,7 +41,7 @@ Options::Options(int argc, char * argv[]) {
              }
 
              else if(param.starts_with("--fit")) {
-                fullscreen = 1;
+                setFullScreen();
              }
 
              else if((param.starts_with("-o")) || (param.starts_with("--output="))) {
@@ -53,4 +50,12 @@ Options::Options(int argc, char * argv[]) {
              }
         }
     }
+
+    void Options::setFullScreen(void) {
+        struct winsize window;
+        ioctl(STDOUT_FILENO, TIOCGWINSZ, &window);
+        targetWidth = window.ws_col * 0.8;
+        targetHeight = window.ws_row * 1.3;
+    }
 }
+

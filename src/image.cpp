@@ -26,7 +26,7 @@ void Image::renderImage(void) const {
 if(!data) return;
 
 int stepX = width / opts.targetWidth;
-int stepY = height / opts.targetHeight;
+int stepY = height / opts.targetHeight / 2;
 
 std::stringstream ss;
 

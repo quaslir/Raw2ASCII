@@ -71,7 +71,7 @@ int stepY = height / opts.targetHeight;
 
 std::cout << "\033[2J\033[?25l";
 
-for(int i = 0; i < data.size(); i++) {
+for(size_t i = 0; i < data.size(); i++) {
     std::cout << "\033[H";
     std::stringstream ss;
 
