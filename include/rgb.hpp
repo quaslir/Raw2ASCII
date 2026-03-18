@@ -1,7 +1,7 @@
-#pragma pack(push, 1)
 #include <stdint.h>
 #include <sstream>
-
+#pragma once
+#pragma pack(push, 1)
 struct RGB {
     uint8_t r, g, b, alpha;
 

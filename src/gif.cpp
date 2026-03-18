@@ -1,11 +1,10 @@
-#define STB_IMAGE_IMPLEMENTATION
 #include "gif.hpp"
 #include "stb_image.h"
 #include <stdexcept>
 #include <string>
 #include <vector>
 #include <fstream>
-
+#include <cstring>
 std::vector<unsigned char> Gif::readGif(const std::string &path) {
 std::ifstream file(path, std::ios::binary | std::ios::ate);
 
@@ -17,7 +16,7 @@ std::streamsize size = file.tellg();
 file.seekg(0, std::ios::beg);
 
 std::vector<unsigned char> buffer;
-buffer.reserve(size);
+buffer.resize(size);
 
 if(!file.read(reinterpret_cast<char *>(buffer.data()), size)) {
     throw std::runtime_error("could not read file " + path);
@@ -29,6 +28,7 @@ return buffer;
 Gif::Gif(const std::string &path){
     int w, h, count, channels;
     int * delays = nullptr;
+    
     std::vector<unsigned char> buffer = readGif(path);
     unsigned char * raw = stbi_load_gif_from_memory(buffer.data(), static_cast<int>(buffer.size())
     , &delays, &w, &h, &count, &channels, 4);   
@@ -49,10 +49,11 @@ for(int i = 0; i < count; i++) {
 
     data[i].delay = delays[i];
     data[i].frame.resize(width * height);
-    std::copy(framePtr, framePtr + frameSize, data[i].frame.data());
+    std::memcpy(data[i].frame.data(), framePtr, frameSize);
 
+
+}
     stbi_image_free(raw);
 
     stbi_image_free(delays);
-}
 };

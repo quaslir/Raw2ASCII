@@ -2,6 +2,7 @@
 #include <memory>
 #include "utils.hpp"
 #include <string>
+#include <vector>
 extern "C" void stbi_image_free(void*);
 struct GifFrame{
 std::vector<RGB> frame;

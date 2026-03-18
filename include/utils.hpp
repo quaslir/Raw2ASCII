@@ -10,8 +10,8 @@ struct Options {
     bool fullscreen;
     std::string outputPath;
     Options();
-    Options(const Options &opts);
-    Options parse(int argc, char * argv[]);
+    Options(int argc, char * argv[]);
+    void parse(int argc, char * argv[]);
     Options& operator=(const Options &) = default;
 };
 
