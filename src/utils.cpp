@@ -55,7 +55,7 @@ Options::Options(int argc, char * argv[]) {
         struct winsize window;
         ioctl(STDOUT_FILENO, TIOCGWINSZ, &window);
         targetWidth = window.ws_col * 0.8;
-        targetHeight = window.ws_row * 1.3;
+        targetHeight = window.ws_row * 0.8;
     }
 }
 
