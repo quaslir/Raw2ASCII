@@ -101,16 +101,12 @@ void VideoDecoder::renderVideo(void) {
 
         return RGB(tr, tg, tb);
     };
-
 RGB prevBottom;
 RGB prevTop;
-
-while(getNextFrame()) {
-
-std::stringstream ss;
-ss << "\033[H";
+    auto renderStream = [&](void) {
+        std::stringstream ss;
 std::cout << "\033[H";
-std::cout << "\033[?25l";
+std::cout << "\033[?25";
 
 for(int y = 0; y < 80; y+=2) {
     for(int x = 0; x < 170; x++) {
@@ -124,9 +120,25 @@ for(int y = 0; y < 80; y+=2) {
      ss << "\033[0m\n";
 }
 
-std::cout << ss.str() << std::fflush;
+std::cout << ss.str();
+    };
 
-std::this_thread::sleep_for(std::chrono::milliseconds(33));
+
+const std::chrono::microseconds frameDur(16666);
+while(getNextFrame()) {
+auto startTime = std::chrono::high_resolution_clock::now();
+
+renderStream();
+
+auto endTime = std::chrono::high_resolution_clock::now();
+
+auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
+
+if(elapsed < frameDur) {
+std::this_thread::sleep_for(frameDur - elapsed);
+}
+
+
 }
 
 std::cout << "\033[?25h";
