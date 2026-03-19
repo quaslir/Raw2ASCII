@@ -11,7 +11,7 @@ VideoDecoder::~VideoDecoder() {
     avformat_close_input(&formatContext);
 }
 
-VideoDecoder::VideoDecoder(const std::string & path) {
+VideoDecoder::VideoDecoder(const std::string & path, const utils::Options & options) {
     if(avformat_open_input(&formatContext, path.c_str(), nullptr, nullptr) < 0) {
         throw std::runtime_error("could not open file " + path);
     }
@@ -34,18 +34,21 @@ VideoDecoder::VideoDecoder(const std::string & path) {
     if(avcodec_open2(codecContext, codec, nullptr) < 0) {
         throw std::runtime_error("could not open codec");
     }
+    opts = options;
 
     packet = av_packet_alloc();
     frame = av_frame_alloc();
     rgbFrame = av_frame_alloc();
     swsContext = sws_getContext(codecContext->width, codecContext->height,
-    codecContext->pix_fmt, 170, 80, AV_PIX_FMT_RGB24, SWS_BILINEAR, nullptr,
+    codecContext->pix_fmt, opts.targetWidth, opts.targetHeight, AV_PIX_FMT_RGB24, SWS_BILINEAR, nullptr,
 nullptr, nullptr);
 
-int bytes = av_image_get_buffer_size(AV_PIX_FMT_RGB24, 170, 80, 1);
+int bytes = av_image_get_buffer_size(AV_PIX_FMT_RGB24, opts.targetWidth, opts.targetHeight, 1);
 buffer = (uint8_t *) av_malloc(bytes);
 av_image_fill_arrays(rgbFrame->data, rgbFrame->linesize, buffer,
-AV_PIX_FMT_RGB24, 170, 80, 1);
+AV_PIX_FMT_RGB24, opts.targetWidth, opts.targetHeight, 1);
+
+
 }
 
 
@@ -78,7 +81,12 @@ while(av_read_frame(formatContext, packet) >= 0) {
             codecContext->height,
             rgbFrame->data,
             rgbFrame->linesize
-        );
+        ); 
+        {
+            std::lock_guard<std::mutex> lock(queueMutex);
+            readyData.push(getReadyFrame());
+        }
+        
         av_packet_unref(packet);
         return true;
     }
@@ -90,9 +98,7 @@ return false;
 }
 
 
-
-void VideoDecoder::renderVideo(void) {
-    auto getPixel = [&] (int x, int y) {
+RGB VideoDecoder::getPixel(int x, int y) const {
         int offset = y * rgbFrame->linesize[0] + x * 3;
 
         uint8_t tr = rgbFrame->data[0][offset];
@@ -100,36 +106,80 @@ void VideoDecoder::renderVideo(void) {
         uint8_t tb = rgbFrame->data[0][offset + 2];
 
         return RGB(tr, tg, tb);
-    };
+}
+
+
+std::vector<RGB> VideoDecoder::getReadyFrame(void) {
+    std::vector<RGB> data;
+for(int y = 0; y < opts.targetHeight; y++) {
+    for(int x = 0; x < opts.targetWidth; x++) {
+
+        data.push_back(getPixel(x, y));
+    }
+
+}
+return data;
+}
+
+void VideoDecoder::renderStream(const std::vector<RGB>& currentFrame) const {
 RGB prevBottom;
-RGB prevTop;
-    auto renderStream = [&](void) {
+        RGB prevTop;
+
         std::stringstream ss;
 std::cout << "\033[H";
-std::cout << "\033[?25";
 
-for(int y = 0; y < 80; y+=2) {
-    for(int x = 0; x < 170; x++) {
 
-        RGB topPixel = getPixel(x, y);
-        RGB bottomPixel = (y + 1 < 80) ? getPixel(x, y + 1) : RGB();
 
-        topPixel.printPixel(ss, bottomPixel, prevTop, prevBottom);
+for(int y = 0; y < opts.targetHeight; y+=2) {
+    for(int x = 0; x < opts.targetWidth; x++) {
+
+        const RGB& top = currentFrame[y * opts.targetWidth + x];
+        int bottomIdx = (y + 1 < opts.targetHeight) ? (y + 1) : y;
+        const RGB& bottom = currentFrame[(bottomIdx) * opts.targetWidth + x];
+
+        top.printPixel(ss, bottom, prevTop, prevBottom);
 
     }
      ss << "\033[0m\n";
 }
 
 std::cout << ss.str();
-    };
 
+}
+
+
+void VideoDecoder::renderVideo(void) {
+    std::thread decoder([&]() {
+        fillQueue();
+        isDecodingFinished = true;
+    });
+
+        
 
 const std::chrono::microseconds frameDur(16666);
-while(getNextFrame()) {
+std::cout << "\033[?25l";
+while(true) {
+
 auto startTime = std::chrono::high_resolution_clock::now();
+std::vector<RGB> currentFrame;
+{
+    std::lock_guard<std::mutex> lock(queueMutex);
+    if(!readyData.empty()) {
+        currentFrame = std::move(readyData.front());
+        readyData.pop();
+    }
+}
 
-renderStream();
 
+if(currentFrame.empty()) {
+    if(isDecodingFinished) break;
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+
+    continue;
+}
+
+renderStream(currentFrame);
 auto endTime = std::chrono::high_resolution_clock::now();
 
 auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
@@ -141,5 +191,14 @@ std::this_thread::sleep_for(frameDur - elapsed);
 
 }
 
+if(decoder.joinable()) decoder.join();
 std::cout << "\033[?25h";
+}
+
+void VideoDecoder::fillQueue(void) {
+    while(getNextFrame()) {
+        while(readyData.size() > 100) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
+    }
 }

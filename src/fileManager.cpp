@@ -21,11 +21,14 @@ namespace ext {
             gif.renderGif();
         }
         else {
-            /*Image img(path, options);
-            img.renderImage();
-            */
-           VideoDecoder video(path);
+            if(path.ends_with(".mp4")) {
+                  VideoDecoder video(path, options);
            video.renderVideo();
+            } else {
+            Image img(path, options);
+            img.renderImage();
+            
+            }
         }
 
         
