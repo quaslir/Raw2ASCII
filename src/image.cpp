@@ -33,8 +33,8 @@ std::stringstream ss;
 
 
 for(int y = 0; y < height; y += stepY * 2) {
-    RGB prevTop = {0, 0, 0, 0};
-    RGB prevBottom = {0, 0, 0, 0};
+    RGB prevTop;
+    RGB prevBottom;
     for(int x = 0; x < width; x += stepX) {
 
         const RGB& top = data[y * width + x];

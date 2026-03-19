@@ -2,6 +2,7 @@
 #include <stdexcept>
 #include "gif.hpp"
 #include "image.hpp"
+#include "video.hpp"
 #include <iostream>
 #include <string_view>
 #include "utils.hpp"
@@ -20,8 +21,11 @@ namespace ext {
             gif.renderGif();
         }
         else {
-            Image img(path, options);
+            /*Image img(path, options);
             img.renderImage();
+            */
+           VideoDecoder video(path);
+           video.renderVideo();
         }
 
         

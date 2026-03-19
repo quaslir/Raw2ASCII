@@ -76,8 +76,8 @@ for(size_t i = 0; i < data.size(); i++) {
     std::stringstream ss;
 
     for(int y = 0; y < height; y += stepY * 2) {
-    RGB prevTop = {0, 0, 0, 0};
-    RGB prevBottom = {0, 0, 0, 0};
+    RGB prevTop(0, 0,0);
+    RGB prevBottom(0,0,0);
     for(int x = 0; x < width; x += stepX) {
 
         const RGB& top = data[i].frame[y * width + x];
