@@ -123,13 +123,13 @@ return data;
 
 void VideoDecoder::renderStream(const std::vector<RGB>& currentFrame) const {
 
-        std::stringstream ss;
+std::string buffer;
 std::cout << "\033[H";
 
 
 
 for(int y = 0; y < opts.targetHeight; y+=2) {
-    RGB prevBottom;
+RGB prevBottom;
 RGB prevTop;
     for(int x = 0; x < opts.targetWidth; x++) {
 
@@ -137,13 +137,13 @@ RGB prevTop;
         int bottomIdx = (y + 1 < opts.targetHeight) ? (y + 1) : y;
         const RGB& bottom = currentFrame[(bottomIdx) * opts.targetWidth + x];
 
-        top.printPixel(ss, bottom, prevTop, prevBottom);
+        top.printPixel(buffer, bottom, prevTop, prevBottom);
 
     }
-     ss << "\033[0m\n";
+     buffer += "\033[0m\n";
 }
 
-std::cout << ss.rdbuf();
+std::cout << buffer.c_str();
 
 }
 

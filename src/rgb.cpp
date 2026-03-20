@@ -12,7 +12,7 @@ return !(*this == other);
 }
 
 
-void RGB::printPixel(std::stringstream & ss, const RGB & bottom, RGB & prevTop, RGB & prevBottom) const {
+void RGB::printPixel(std::string & str, const RGB & bottom, RGB & prevTop, RGB & prevBottom) const {
 
         int Rt = (r * alpha) / 255;
         int Gt = (g * alpha) / 255;
@@ -26,13 +26,13 @@ void RGB::printPixel(std::stringstream & ss, const RGB & bottom, RGB & prevTop, 
     if(prevTop.r == Rt && prevTop.g == Gt && prevTop.b == Bt && 
         prevBottom.r == Rb && prevBottom.g ==Gb &&
         prevBottom.b == Bb && prevTop.alpha == (isTransparent ? 0 : 255)) {
-            ss << (isTransparent ? " " : "▀");
+            str += (isTransparent ? " " : "▀");
             return;
         }
 
 
         if(isTransparent) {
-            ss << "\033[0m ";
+            str +=  "\033[0m ";
             prevTop = RGB();
             prevBottom = RGB();
         } else {
@@ -40,14 +40,9 @@ void RGB::printPixel(std::stringstream & ss, const RGB & bottom, RGB & prevTop, 
                std::snprintf(buffer, sizeof (buffer), "\033[38;2;%d;%d;%dm\033[48;2;%d;%d;%dm▀",
     Rt, Gt, Bt, Rb, Gb, Bb);
 
-    ss << buffer;
+    str +=  buffer;
         }
 
-        
-
-
-
-     
 
     prevTop = *this;
     prevBottom = bottom;

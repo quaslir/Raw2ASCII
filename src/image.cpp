@@ -28,7 +28,7 @@ if(!data) return;
 int stepX = width / opts.targetWidth;
 int stepY = height / opts.targetHeight / 2;
 
-std::stringstream ss;
+std::string buffer;
 
 
 
@@ -41,16 +41,17 @@ for(int y = 0; y < height; y += stepY * 2) {
         int bottomIdx = (y + stepY < height) ? (y + stepY) : y;
         const RGB& bottom = data[(bottomIdx) * width + x];
 
-       top.printPixel(ss, bottom, prevTop, prevBottom);
+       top.printPixel(buffer, bottom, prevTop, prevBottom);
     }
-    ss << "\x1b[0m\n";
+    buffer +="\x1b[0m\n";
 }
 
 
 
 if(opts.outputPath.empty())
-std::cout << ss.str();
+std::cout << buffer.c_str();
 else {
+    std::stringstream ss(buffer);
     saveToFile(ss);
 }
 }

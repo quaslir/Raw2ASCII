@@ -73,7 +73,7 @@ std::cout << "\033[2J\033[?25l";
 
 for(size_t i = 0; i < data.size(); i++) {
     std::cout << "\033[H";
-    std::stringstream ss;
+    std::string buffer;
 
     for(int y = 0; y < height; y += stepY * 2) {
     RGB prevTop(0, 0,0);
@@ -84,12 +84,12 @@ for(size_t i = 0; i < data.size(); i++) {
         int bottomIdx = (y + stepY < height) ? (y + stepY) : y;
         const RGB& bottom = data[i].frame[(bottomIdx) * width + x];
 
-       top.printPixel(ss, bottom, prevTop, prevBottom);
+       top.printPixel(buffer, bottom, prevTop, prevBottom);
     }
-    ss << "\x1b[0m\n";
+    buffer += "\x1b[0m\n";
 }
 
-std::cout << ss.str();
+std::cout << buffer.c_str();
 std::this_thread::sleep_for(std::chrono::milliseconds(data[i].delay));
 }
 
