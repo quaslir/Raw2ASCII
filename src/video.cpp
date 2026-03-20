@@ -122,8 +122,6 @@ return data;
 }
 
 void VideoDecoder::renderStream(const std::vector<RGB>& currentFrame) const {
-RGB prevBottom;
-        RGB prevTop;
 
         std::stringstream ss;
 std::cout << "\033[H";
@@ -131,6 +129,8 @@ std::cout << "\033[H";
 
 
 for(int y = 0; y < opts.targetHeight; y+=2) {
+    RGB prevBottom;
+RGB prevTop;
     for(int x = 0; x < opts.targetWidth; x++) {
 
         const RGB& top = currentFrame[y * opts.targetWidth + x];
@@ -143,7 +143,7 @@ for(int y = 0; y < opts.targetHeight; y+=2) {
      ss << "\033[0m\n";
 }
 
-std::cout << ss.str();
+std::cout << ss.rdbuf();
 
 }
 
@@ -157,7 +157,7 @@ void VideoDecoder::renderVideo(void) {
         
 
 const std::chrono::microseconds frameDur(16666);
-std::cout << "\033[?25l";
+std::cout << "\033[2J\033[?25l";
 while(true) {
 
 auto startTime = std::chrono::high_resolution_clock::now();

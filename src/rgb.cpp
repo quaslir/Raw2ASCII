@@ -14,23 +14,41 @@ return !(*this == other);
 
 void RGB::printPixel(std::stringstream & ss, const RGB & bottom, RGB & prevTop, RGB & prevBottom) const {
 
-    if(this->alpha < 96 && bottom.alpha < 96) {
-        ss << " ";
-        return;
-    }
+        int Rt = (r * alpha) / 255;
+        int Gt = (g * alpha) / 255;
+        int Bt = (b * alpha) / 255;
+        int Rb = (bottom.r * bottom.alpha) / 255;
+        int Gb = (bottom.g * bottom.alpha) / 255;
+        int Bb = (bottom.b * bottom.alpha) / 255;
 
-        int Rt = (this->alpha > 96) ? r : 0;
-        int Gt = (this->alpha > 96) ? g : 0;
-        int Bt = (this->alpha > 96) ? b : 0;
-        int Rb = (this->alpha > 96) ? bottom.r : 0;
-        int Gb = (this->alpha > 96) ? bottom.g : 0;
-        int Bb = (this->alpha > 96) ? bottom.b : 0;
+    bool isTransparent = (alpha < 10 && bottom.alpha < 10);
 
-        char buffer[128];
+    if(prevTop.r == Rt && prevTop.g == Gt && prevTop.b == Bt && 
+        prevBottom.r == Rb && prevBottom.g ==Gb &&
+        prevBottom.b == Bb && prevTop.alpha == (isTransparent ? 0 : 255)) {
+            ss << (isTransparent ? " " : "▀");
+            return;
+        }
 
-        std::snprintf(buffer, sizeof (buffer), "\033[38;2;%d;%d;%dm\033[48;2;%d;%d;%dm▀\033[0m",
+
+        if(isTransparent) {
+            ss << "\033[0m ";
+            prevTop = RGB();
+            prevBottom = RGB();
+        } else {
+            char buffer[128];
+               std::snprintf(buffer, sizeof (buffer), "\033[38;2;%d;%d;%dm\033[48;2;%d;%d;%dm▀",
     Rt, Gt, Bt, Rb, Gb, Bb);
 
     ss << buffer;
+        }
 
+        
+
+
+
+     
+
+    prevTop = *this;
+    prevBottom = bottom;
 }
