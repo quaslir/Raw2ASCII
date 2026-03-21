@@ -1,16 +1,14 @@
 
-#include <string>
 #include <fstream>
+#include <string>
 
 namespace ext {
 
 struct FileManager {
 
+  FileManager(const std::string &path, int argc, char *argv[]);
 
-    FileManager(const std::string & path, int argc, char * argv[]);
-
-    bool isGif(std::ifstream & file);
-
+  bool isGif(std::ifstream &file);
 };
 
-}
+} // namespace ext

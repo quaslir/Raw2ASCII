@@ -6,6 +6,37 @@ if(APPLE)
 endif()
 
 
+if(NOT CMAKE_BUILD_TYPE)
+set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build" FORCE)
+endif()
+
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+
+message(STATUS "Debug mode: Enabling static analysis tools")
+
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+find_program(CPPCHECK_EXE NAMES "cppcheck")
+
+if(CPPCHECK_EXE)
+set(CMAKE_CXX_CPPCHECK
+${CPPCHECK_EXE}
+"--enable=all"
+"--suppress=missingIncludeSystem"
+)
+
+endif()
+
+find_program(CLANG_TIDY_EXE NAMES "clang-tidy")
+
+if(CLANG_TIDY_EXE)
+
+set(CMAKE_CXX_CLANG_TIDY
+${CLANG_TIDY_EXE} "-checks=*,bugprone-*,modernize-*,performance-*")
+
+endif()
+
+endif()
 
 
 
@@ -38,3 +69,20 @@ foreach(module ${FFMPEG_MODULES})
 
     target_link_directories(${PROJECT_NAME} PRIVATE ${${module}_LIBRARY_DIRS})
 endforeach()
+
+file(GLOB_RECURSE ALL_FILES *.cpp *.hpp)
+
+find_program(CLANG_FORMAT_EXE NAMES "clang-format")
+
+if(CLANG_FORMAT_EXE)
+
+add_custom_target(format
+COMMAND ${CLANG_FORMAT_EXE} -i -style=LLVM ${ALL_FILES}
+COMMENT "Formatting all source files with clang format..."
+)
+
+endif()
+
+
+
+

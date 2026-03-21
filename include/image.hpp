@@ -1,19 +1,20 @@
 #pragma once
-#include <string>
-#include <memory>
 #include "rgb.hpp"
 #include "utils.hpp"
-extern "C" void stbi_image_free(void*);
+#include <memory>
+#include <string>
+extern "C" void stbi_image_free(void *);
 class Image {
-    using StbPtr = std::unique_ptr<RGB[], decltype(&stbi_image_free)>;
-    private:
-    int width, height, channels;
-    StbPtr data;
-    utils::Options opts;
+  using StbPtr = std::unique_ptr<RGB[], decltype(&stbi_image_free)>;
 
+private:
+  int width, height, channels;
+  StbPtr data;
+  utils::Options opts;
 
-    void saveToFile(std::stringstream & ss) const;
-    public:
-    Image(const std::string & pathToImage, const utils::Options & options);
-    void renderImage(void) const;
+  void saveToFile(std::stringstream &ss) const;
+
+public:
+  Image(const std::string &pathToImage, const utils::Options &options);
+  void renderImage(void) const;
 };
