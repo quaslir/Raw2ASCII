@@ -16,6 +16,7 @@ extern "C" {
 #include <stdint.h>
 #include <string>
 #include <vector>
+#include "fps.hpp"
 class VideoDecoder {
 private:
   AVFormatContext *formatContext = nullptr;
@@ -29,7 +30,7 @@ private:
   utils::Options opts;
   std::mutex queueMutex;
   bool isDecodingFinished = false;
-
+  FPS fps;
   std::queue<std::vector<RGB>> readyData;
   std::vector<RGB> getReadyFrame(void);
   RGB getPixel(int x, int y) const;

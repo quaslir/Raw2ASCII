@@ -145,11 +145,12 @@ void VideoDecoder::renderVideo(void) {
     isDecodingFinished = true;
   });
 
-  const std::chrono::microseconds frameDur(16666);
+  long long count = 0;
+    auto startTime = std::chrono::high_resolution_clock::now();
   std::cout << "\033[2J\033[?25l";
   while (true) {
-
-    auto startTime = std::chrono::high_resolution_clock::now();
+    auto frameDur = std::chrono::microseconds(static_cast<long long>(1000000.0 / fps.getfps()));
+    
     std::vector<RGB> currentFrame;
     {
       std::lock_guard<std::mutex> lock(queueMutex);
@@ -172,14 +173,13 @@ void VideoDecoder::renderVideo(void) {
     } else {
       renderStream(currentFrame);
     }
-    auto endTime = std::chrono::high_resolution_clock::now();
+    fps.update();
+    int currentfps = fps.getfps();
+    std::cout << "\033[H\033[1;32m FPS: " << std::to_string(currentfps) << " \033[K\033[0m\n"; 
 
-    auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(
-        endTime - startTime);
-
-    if (elapsed < frameDur) {
-      std::this_thread::sleep_for(frameDur - elapsed);
-    }
+    auto next_frame = startTime + (count * frameDur);
+    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    count++;
   }
 
   if (decoder.joinable())
