@@ -95,9 +95,10 @@ bool VideoDecoder::getNextFrame(void) {
       sws_scale(swsContext, frame->data, frame->linesize, 0,
                 codecContext->height, rgbFrame->data, rgbFrame->linesize);
                 std::unique_ptr<RGB[]> readyFrame = getReadyFrame();
+                std::string toASCII = renderStream(readyFrame.get());
       {
         std::lock_guard<std::mutex> lock(queueMutex);
-        readyData.push(Frame(std::move(readyFrame), pts));
+        readyData.push(Frame(std::move(toASCII), pts));
       }
 
       av_packet_unref(packet);
@@ -142,7 +143,6 @@ std::string VideoDecoder::renderStream(RGB * currentFrame) const {
 
   std::string buffer;
   buffer.reserve(opts.targetHeight * opts.targetWidth * 20);
-  std::cout << "\033[H";
 
   for (int y = 0; y < opts.targetHeight; y += 2) {
     RGB prevBottom;
@@ -182,7 +182,7 @@ void VideoDecoder::renderVideo(void) {
       }
     }
 
-    if (!currentFrame.data) {
+    if (currentFrame.data.empty()) {
       if (isDecodingFinished)
         break;
 
@@ -202,15 +202,14 @@ void VideoDecoder::renderVideo(void) {
       continue;
     }
 
-    std::string buffer;
     fps.update();
-    buffer += fps.display();
-    if (opts.braille) {
-     //buffer += opts.renderBraille(currentFrame);
-    } else {
-      buffer += renderStream(currentFrame.data.get());
-    }
-    std::fwrite(buffer.c_str(), 1, buffer.size(), stdout);
+  std::fwrite(currentFrame.data.c_str(),1 , currentFrame.data.size(), stdout);
+   std::fwrite("\033[H", 1, 3, stdout);
+   std::string fpsStr = fps.display() + "\033[K\n";
+   std::fwrite(fpsStr.data(), 1, fpsStr.size(), stdout);
+
+  
+
     
   }
 

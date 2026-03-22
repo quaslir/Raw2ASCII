@@ -20,10 +20,10 @@ extern "C" {
 #include "fps.hpp"
 
 struct Frame {
-  std::unique_ptr<RGB[]> data;
+ std::string data;
   double duration;
 
-  Frame(std::unique_ptr<RGB[]>d, double dur) : data(std::move(d)), duration(dur) {}
+  Frame(std::string &&s, double dur) : data(std::move(s)), duration(dur) {}
   Frame() = default;
 };
 
