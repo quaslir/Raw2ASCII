@@ -35,12 +35,10 @@ void RGB::printPixel(std::string &str, const RGB &bottom, RGB &prevTop,
     prevTop = RGB();
     prevBottom = RGB();
   } else {
-    char buffer[100];
-    std::snprintf(buffer, sizeof(buffer),
-                  "\033[38;2;%d;%d;%dm\033[48;2;%d;%d;%dm▀", Rt, Gt, Bt, Rb, Gb,
-                  Bb);
+ 
+    str += "\033[38;2;" + std::to_string(Rt) + ';' + std::to_string(Gt) + ';' + std::to_string(Bt) + 'm' +
+    "\033[48;2;" + std::to_string(Rb) + ';' + std::to_string(Gb) + ';' + std::to_string(Bb) + "m▀";
 
-    str += buffer;
   }
 
   prevTop = *this;
