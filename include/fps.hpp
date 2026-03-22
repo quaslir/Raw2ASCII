@@ -7,6 +7,6 @@ class FPS {
     int frameCount;
     public:
     void update(void);
-    int getfps(void) const;
+    std::string display(void) const;
     FPS();
 };

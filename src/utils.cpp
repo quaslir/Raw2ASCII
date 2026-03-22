@@ -89,7 +89,7 @@ std::string calculateBraille(bool dots[2][4]) {
   return result;
 }
 
-void Options::renderBraille(const std::vector<RGB> & frame) const {
+std::string Options::renderBraille(const std::vector<RGB> & frame) const {
   std::string buffer;
   buffer += "\033[H";
 
@@ -152,15 +152,15 @@ void Options::renderBraille(const std::vector<RGB> & frame) const {
       bright = dark;
     }
       if(bright != prevbright) {
-        buffer += "\033[38;2;" + std::to_string(bright.r) + ';' +
-                  std::to_string(bright.g) + ';' +
-                  std::to_string(bright.b) + 'm';
+        buffer += "\033[38;2;" + bright.r + ';' +
+                  bright.g + ';' +
+                  bright.b + 'm';
       }
 
       if(dark != prevdark) {
-        buffer += "\033[48;2;" + std::to_string(dark.r) + ';' +
-                  std::to_string(dark.g) + ';' +
-                  std::to_string(dark.b) + 'm';
+        buffer += "\033[48;2;" + dark.r + ';' +
+                  dark.g + ';' +
+                  dark.b + 'm';
       }
 
         buffer += utils::calculateBraille(dots);
@@ -175,7 +175,7 @@ void Options::renderBraille(const std::vector<RGB> & frame) const {
     
 
 
-  std::cout << buffer.c_str();
+return buffer;
 
 }
 

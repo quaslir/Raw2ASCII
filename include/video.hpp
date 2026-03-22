@@ -16,7 +16,17 @@ extern "C" {
 #include <stdint.h>
 #include <string>
 #include <vector>
+#include <memory>
 #include "fps.hpp"
+
+struct Frame {
+  std::unique_ptr<RGB[]> data;
+  double duration;
+
+  Frame(std::unique_ptr<RGB[]>d, double dur) : data(std::move(d)), duration(dur) {}
+  Frame() = default;
+};
+
 class VideoDecoder {
 private:
   AVFormatContext *formatContext = nullptr;
@@ -31,15 +41,17 @@ private:
   std::mutex queueMutex;
   bool isDecodingFinished = false;
   FPS fps;
-  std::queue<std::vector<RGB>> readyData;
-  std::vector<RGB> getReadyFrame(void);
-  RGB getPixel(int x, int y) const;
-  void renderStream(const std::vector<RGB> &currentFrame) const;
-  void fillQueue(void);
+  std::queue<Frame>readyData;
 
+  
+  std::unique_ptr<RGB[]> getReadyFrame(void);
+  RGB getPixel(int x, int y) const;
+  std::string renderStream(RGB *currentFrame) const;
+  void fillQueue(void);
+    bool getNextFrame(void);
 public:
   VideoDecoder(const std::string &path, const utils::Options &options);
-  bool getNextFrame(void);
+
   void renderVideo(void);
   ~VideoDecoder();
 };

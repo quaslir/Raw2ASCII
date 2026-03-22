@@ -14,12 +14,12 @@ bool RGB::operator!=(const RGB &other) const { return !(*this == other); }
 void RGB::printPixel(std::string &str, const RGB &bottom, RGB &prevTop,
                      RGB &prevBottom) const {
 
-  int Rt = (r * alpha) / 255;
-  int Gt = (g * alpha) / 255;
-  int Bt = (b * alpha) / 255;
-  int Rb = (bottom.r * bottom.alpha) / 255;
-  int Gb = (bottom.g * bottom.alpha) / 255;
-  int Bb = (bottom.b * bottom.alpha) / 255;
+  int Rt = (r * alpha + 128) / 255;
+  int Gt = (g * alpha + 128) / 255;
+  int Bt = (b * alpha + 128) / 255;
+  int Rb = (bottom.r * bottom.alpha + 128) / 255;
+  int Gb = (bottom.g * bottom.alpha + 128) / 255;
+  int Bb = (bottom.b * bottom.alpha + 128) / 255;
 
   bool isTransparent = (alpha < 10 && bottom.alpha < 10);
 
@@ -35,7 +35,7 @@ void RGB::printPixel(std::string &str, const RGB &bottom, RGB &prevTop,
     prevTop = RGB();
     prevBottom = RGB();
   } else {
-    char buffer[128];
+    char buffer[100];
     std::snprintf(buffer, sizeof(buffer),
                   "\033[38;2;%d;%d;%dm\033[48;2;%d;%d;%dm▀", Rt, Gt, Bt, Rb, Gb,
                   Bb);
@@ -47,20 +47,3 @@ void RGB::printPixel(std::string &str, const RGB &bottom, RGB &prevTop,
   prevBottom = bottom;
 }
 
-RGB getContrastColor(const RGB & pixel) {
-  const int minContrast = 128;
-  int maxContrast = 192;
-  int y = static_cast<int>(std::round(0.299 * pixel.r + 0.587 * pixel.g + 0.114 * pixel.b));
-    
-  bool bright = (y < 128);
-
-  if(bright) {
-    return RGB(
-      std::clamp(pixel.r + minContrast, 0, 255),
-      std::clamp(pixel.g + minContrast, 0, 255),
-      std::clamp(pixel.b + minContrast, 0, 255)
-    );
-  } else {
-    return RGB(pixel.r / 4, pixel.g / 4, pixel.b / 4);
-  }
-}

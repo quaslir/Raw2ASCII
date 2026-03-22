@@ -21,7 +21,7 @@ FileManager::FileManager(const std::string &path, int argc, char *argv[]) {
     Gif gif(path, options);
     gif.renderGif();
   } else {
-    if (path.ends_with(".mp4")) {
+    if (path.ends_with(".mp4") || path.ends_with(".MOV")) {
       VideoDecoder video(path, options);
       video.renderVideo();
     } else {

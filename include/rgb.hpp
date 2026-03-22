@@ -16,4 +16,3 @@ struct RGB {
 };
 #pragma pack(pop)
 
-RGB getContrastColor(const RGB & pixel);

@@ -1,5 +1,5 @@
 #include "fps.hpp"
-
+#include <iostream>
 FPS::FPS() {
     frameCount = 0;
     fps = 0;
@@ -18,6 +18,13 @@ void FPS::update(void) {
     }
 }
 
-int FPS::getfps(void) const {
-    return fps;
+std::string FPS::display(void) const {
+    std::string buffer;
+    buffer.reserve(64);
+    buffer += "\033[H\033[1;32m";
+    buffer += " FPS: ";
+    buffer += std::to_string(fps);
+    buffer += " \033[K\033[0m\n";
+
+   return buffer;
 }

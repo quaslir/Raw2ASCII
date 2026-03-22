@@ -3,6 +3,7 @@
 #include <iostream>
 #include <sstream>
 #include <thread>
+#include <cstring>
 VideoDecoder::~VideoDecoder() {
 
   av_packet_free(&packet);
@@ -48,13 +49,13 @@ VideoDecoder::VideoDecoder(const std::string &path,
   swsContext =
       sws_getContext(codecContext->width, codecContext->height,
                      codecContext->pix_fmt, opts.targetWidth, opts.targetHeight,
-                     AV_PIX_FMT_RGB24, SWS_BILINEAR, nullptr, nullptr, nullptr);
+                     AV_PIX_FMT_RGBA, SWS_BILINEAR, nullptr, nullptr, nullptr);
 
-  int bytes = av_image_get_buffer_size(AV_PIX_FMT_RGB24, opts.targetWidth,
+  int bytes = av_image_get_buffer_size(AV_PIX_FMT_RGBA, opts.targetWidth,
                                        opts.targetHeight, 1);
   buffer = static_cast<uint8_t *> (av_malloc(bytes));
   av_image_fill_arrays(rgbFrame->data, rgbFrame->linesize, buffer,
-                       AV_PIX_FMT_RGB24, opts.targetWidth, opts.targetHeight,
+                       AV_PIX_FMT_RGBA, opts.targetWidth, opts.targetHeight,
                        1);
 }
 
@@ -69,6 +70,8 @@ bool VideoDecoder::getNextFrame(void) {
         return false;
       }
 
+
+
       response = avcodec_receive_frame(codecContext, frame);
 
       if (response == AVERROR(EAGAIN) || response == AVERROR_EOF) {
@@ -79,11 +82,22 @@ bool VideoDecoder::getNextFrame(void) {
         return false;
       }
 
+
+      
+      double pts = 0;
+
+      if(frame->best_effort_timestamp != AV_NOPTS_VALUE) {
+        AVRational tb = formatContext->streams[videoStreamIndex]->time_base;
+        pts = frame->best_effort_timestamp * av_q2d(tb);
+      }
+
+      
       sws_scale(swsContext, frame->data, frame->linesize, 0,
                 codecContext->height, rgbFrame->data, rgbFrame->linesize);
+                std::unique_ptr<RGB[]> readyFrame = getReadyFrame();
       {
         std::lock_guard<std::mutex> lock(queueMutex);
-        readyData.push(getReadyFrame());
+        readyData.push(Frame(std::move(readyFrame), pts));
       }
 
       av_packet_unref(packet);
@@ -106,20 +120,28 @@ RGB VideoDecoder::getPixel(int x, int y) const {
   return RGB(tr, tg, tb);
 }
 
-std::vector<RGB> VideoDecoder::getReadyFrame(void) {
-  std::vector<RGB> data;
-  for (int y = 0; y < opts.targetHeight; y++) {
-    for (int x = 0; x < opts.targetWidth; x++) {
+std::unique_ptr<RGB[]> VideoDecoder::getReadyFrame(void) {
+  size_t size = opts.targetWidth * opts.targetHeight;
+  std::unique_ptr<RGB[]> data = std::make_unique<RGB[]>(size);
 
-      data.push_back(getPixel(x, y));
-    }
+  uint8_t *dst = reinterpret_cast<uint8_t*>(data.get());
+  uint8_t *src = rgbFrame->data[0];
+
+  for(int y = 0; y < opts.targetHeight; y++) {
+    std::memcpy(dst, src, opts.targetWidth * 4);
+
+    src += rgbFrame->linesize[0];
+
+    dst += opts.targetWidth * 4;
   }
+
   return data;
 }
 
-void VideoDecoder::renderStream(const std::vector<RGB> &currentFrame) const {
+std::string VideoDecoder::renderStream(RGB * currentFrame) const {
 
   std::string buffer;
+  buffer.reserve(opts.targetHeight * opts.targetWidth * 20);
   std::cout << "\033[H";
 
   for (int y = 0; y < opts.targetHeight; y += 2) {
@@ -136,7 +158,7 @@ void VideoDecoder::renderStream(const std::vector<RGB> &currentFrame) const {
     buffer += "\033[0m\n";
   }
 
-  std::cout << buffer.c_str();
+  return buffer;
 }
 
 void VideoDecoder::renderVideo(void) {
@@ -145,13 +167,13 @@ void VideoDecoder::renderVideo(void) {
     isDecodingFinished = true;
   });
 
-  long long count = 0;
-    auto startTime = std::chrono::high_resolution_clock::now();
+    auto startTime = std::chrono::steady_clock::now();
   std::cout << "\033[2J\033[?25l";
+  
   while (true) {
-    auto frameDur = std::chrono::microseconds(static_cast<long long>(1000000.0 / fps.getfps()));
+    auto frameDur = std::chrono::microseconds(static_cast<long long>(1000000.0 / 1));
     
-    std::vector<RGB> currentFrame;
+    Frame currentFrame;
     {
       std::lock_guard<std::mutex> lock(queueMutex);
       if (!readyData.empty()) {
@@ -160,7 +182,7 @@ void VideoDecoder::renderVideo(void) {
       }
     }
 
-    if (currentFrame.empty()) {
+    if (!currentFrame.data) {
       if (isDecodingFinished)
         break;
 
@@ -168,18 +190,28 @@ void VideoDecoder::renderVideo(void) {
 
       continue;
     }
-    if (opts.braille) {
-      opts.renderBraille(currentFrame);
-    } else {
-      renderStream(currentFrame);
-    }
-    fps.update();
-    int currentfps = fps.getfps();
-    std::cout << "\033[H\033[1;32m FPS: " << std::to_string(currentfps) << " \033[K\033[0m\n"; 
 
-    auto next_frame = startTime + (count * frameDur);
-    std::this_thread::sleep_for(std::chrono::milliseconds(1));
-    count++;
+
+    auto now = std::chrono::steady_clock::now();
+    std::chrono::duration<double> elapsed = now - startTime;
+    double delay = currentFrame.duration - elapsed.count();
+
+    if(delay > 0.005) {
+      std::this_thread::sleep_for(std::chrono::duration<double>(delay));
+    } else if(delay < -0.05) {
+      continue;
+    }
+
+    std::string buffer;
+    fps.update();
+    buffer += fps.display();
+    if (opts.braille) {
+     //buffer += opts.renderBraille(currentFrame);
+    } else {
+      buffer += renderStream(currentFrame.data.get());
+    }
+    std::fwrite(buffer.c_str(), 1, buffer.size(), stdout);
+    
   }
 
   if (decoder.joinable())

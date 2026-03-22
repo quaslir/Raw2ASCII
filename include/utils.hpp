@@ -16,7 +16,7 @@ struct Options {
   void parse(int argc, char *argv[]);
   Options &operator=(const Options &) = default;
   void setFullScreen(void);
-  void renderBraille(const std::vector<RGB> & frame) const;
+  std::string renderBraille(const std::vector<RGB> & frame) const;
 };
 
 std::string calculateBraille(bool dots[2][4]);

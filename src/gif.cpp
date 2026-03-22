@@ -95,3 +95,4 @@ void Gif::renderGif(void) const {
 
   std::cout << "\033[?25h" << std::endl;
 }
+
