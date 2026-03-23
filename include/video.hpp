@@ -49,7 +49,7 @@ private:
   bool getNextFrame(void);
 
 public:
-  VideoDecoder(const std::string &path, const utils::Options &options);
+  VideoDecoder(const utils::Options &options);
 
   void renderVideo(void);
   ~VideoDecoder();

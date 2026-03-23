@@ -8,7 +8,7 @@
 #include <string>
 #include <thread>
 #include <vector>
-std::vector<unsigned char> Gif::readGif(const std::string &path) {
+std::vector<char> Gif::readGif(const std::string &path) {
   std::ifstream file(path, std::ios::binary | std::ios::ate);
 
   if (!file.is_open()) {
@@ -18,7 +18,7 @@ std::vector<unsigned char> Gif::readGif(const std::string &path) {
   std::streamsize size = file.tellg();
   file.seekg(0, std::ios::beg);
 
-  std::vector<unsigned char> buffer;
+  std::vector<char> buffer;
   buffer.resize(size);
 
   if (!file.read(reinterpret_cast<char *>(buffer.data()), size)) {
@@ -31,9 +31,13 @@ Gif::Gif(const std::string &path, const utils::Options &options) {
   int w, h, count, channels;
   int *delays = nullptr;
 
-  std::vector<unsigned char> buffer = readGif(path);
+  std::vector<char> buffer;
+  if(options.readStdin) {
+    buffer = utils::readStdin();
+  }
+  else buffer = readGif(path);
   unsigned char *raw =
-      stbi_load_gif_from_memory(buffer.data(), static_cast<int>(buffer.size()),
+      stbi_load_gif_from_memory(reinterpret_cast<const stbi_uc*>(buffer.data()), static_cast<int>(buffer.size()),
                                 &delays, &w, &h, &count, &channels, 4);
 
   if (!raw) {

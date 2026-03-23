@@ -9,14 +9,18 @@
 #include <string>
 #include <sys/ioctl.h>
 #include <unistd.h>
-Image::Image(const std::string &pathToImage, const utils::Options &options)
+Image::Image(const utils::Options &options)
     : data(nullptr, stbi_image_free) {
 
-  unsigned char *raw =
-      stbi_load(pathToImage.c_str(), &width, &height, &channels, 4);
+  unsigned char *raw =nullptr;
+  if(options.readStdin) {
+    std::vector<char> buffer = utils::readStdin();
+    raw = stbi_load_from_memory(reinterpret_cast<const stbi_uc*> (buffer.data()),static_cast<int>(buffer.size()), &width, &height, &channels, 4);
+  }
+      else raw = stbi_load(options.file.c_str(), &width, &height, &channels, 4);
 
   if (!raw) {
-    throw std::runtime_error("Failed to load image " + pathToImage);
+    throw std::runtime_error("Failed to load image");
   }
 
   data.reset(reinterpret_cast<RGB *>(raw));

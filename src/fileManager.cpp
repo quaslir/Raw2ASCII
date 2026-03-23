@@ -9,29 +9,30 @@
 #include <fstream>
 #include <string_view>
 #include <array>
+#include <exception>
 #define GIF_SIGNATURE 6
 namespace ext {
-FileManager::FileManager(const std::string &path, int argc, char *argv[]) {
-  std::ifstream file(path, std::ios::binary | std::ios::ate);
-  if (!file.is_open()) {
-    throw std::runtime_error("could not open " + path);
-  }
-  utils::Options options(argc, argv);
+FileManager::FileManager(utils::Options && options) {
+    std::ifstream file(options.file, std::ios::binary | std::ios::ate);
+  try {
   if (options.targetHeight == 1 && options.targetWidth == 1) {
     options.setFullScreen();
   }
   if (isGif(file)) {
-    const Gif gif(path, options);
+    const Gif gif(options.file, options);
     gif.renderGif();
   } else {
-    if (path.ends_with(".mp4") || path.ends_with(".MOV")) {
-      VideoDecoder video(path, options);
+    if (options.file.ends_with(".mp4") || options.file.ends_with(".MOV")) {
+      VideoDecoder video(options);
       video.renderVideo();
     } else {
-      const Image img(path, options);
+      const Image img(options);
       img.renderImage();
     }
   }
+} catch(const std::exception & err) {
+  std::cerr << err.what() << '\n';
+}
 }
 
 bool FileManager::isGif(std::ifstream &file) {

@@ -8,9 +8,11 @@ namespace utils {
 Options::Options(int argc, char *argv[]) { parse(argc, argv); }
 void Options::parse(int argc, char *argv[]) {
 
-  if (argc < 3)
-    return;
-  for (int i = 2; i < argc; i++) {
+  if (argc < 2) {
+    throw std::runtime_error("input file was not provided");
+  }
+    
+  for (int i = 1; i < argc; i++) {
     std::string_view param(argv[i]);
 
     if ((param.starts_with("-w")) || (param.starts_with("--width="))) {
@@ -51,6 +53,12 @@ void Options::parse(int argc, char *argv[]) {
 
     else if (param == "--braille" || param == "-b") {
       braille = true;
+    }
+    else {
+      if(param == "-") {
+        readStdin = true;
+      } else
+      file = param;
     }
   }
 }
@@ -166,6 +174,11 @@ std::string Options::renderBraille(const std::vector<RGB> &frame) const {
   }
 
   return buffer;
+}
+
+std::vector<char> readStdin(void) {
+  return std::vector<char>((std::istreambuf_iterator<char>(std::cin)),
+  std::istreambuf_iterator<char>());
 }
 
 } // namespace utils

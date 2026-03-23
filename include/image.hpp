@@ -15,6 +15,6 @@ private:
   void saveToFile(std::stringstream &ss) const;
 
 public:
-  Image(const std::string &pathToImage, const utils::Options &options);
+  Image(const utils::Options &options);
   void renderImage(void) const;
 };

@@ -1,12 +1,12 @@
-
+#pragma once
 #include <fstream>
 #include <string>
-
+#include "utils.hpp"
 namespace ext {
 
 struct FileManager {
 
-  FileManager(const std::string &path, int argc, char *argv[]);
+  FileManager(utils::Options && opts);
 
   bool isGif(std::ifstream &file);
 };

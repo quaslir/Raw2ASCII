@@ -15,7 +15,7 @@ private:
   int width, height;
   utils::Options opts;
 
-  std::vector<unsigned char> readGif(const std::string &path);
+  std::vector<char> readGif(const std::string &path);
 
 public:
   Gif(const std::string &path, const utils::Options &options);

@@ -10,6 +10,8 @@ struct Options {
   int targetHeight = 1;
   bool fullscreen = false;
   bool braille = false;
+  bool readStdin = false;
+  std::string file = "";
   std::string outputPath = "";
   Options() {}
   Options(int argc, char *argv[]);
@@ -20,5 +22,5 @@ struct Options {
 };
 
 std::string calculateBraille(bool dots[2][4]);
-
+std::vector<char> readStdin(void);
 } // namespace utils

@@ -1,7 +1,6 @@
-#define MA_NO_RUNTIME_LINKING
-#define MINIAUDIO_IMPLEMENTATION
 #include "audio.hpp"
 #include "miniaudio.h"
+#include <cstring>
 #include <stdexcept>
 void AudioPlayer::init() {
    AVFormatContext * formatContext = getFormatContext();
@@ -37,14 +36,16 @@ void AudioPlayer::init() {
     throw std::runtime_error("Failed to open playback device");
   }
 
-  if (ma_device_start(&dev) != MA_SUCCESS) {
-    throw std::runtime_error("Failed to start playback device");
-  }
+ 
   
   ma_result initRes = ma_pcm_rb_init(ma_format_f32, 2, 48000 * 10,NULL, NULL, &rb);
 
   if(initRes != MA_SUCCESS) {
     throw std::runtime_error("failed to init ring buffer");
+  }
+
+   if (ma_device_start(&dev) != MA_SUCCESS) {
+    throw std::runtime_error("Failed to start playback device");
   }
 }
 
@@ -52,7 +53,8 @@ AudioPlayer::~AudioPlayer() {
   swr_free(&swrContext);
   avcodec_free_context(&codecContext);
    ma_device_uninit(&dev); 
-  
+  ma_pcm_rb_uninit(&rb);
+  av_frame_free(&audioFrame);
   }
 
 void AudioPlayer::dataCallback(ma_device * pDev, void * output, const void *input, ma_uint32 frames) {

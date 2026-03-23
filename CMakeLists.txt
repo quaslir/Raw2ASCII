@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.20)
 
-
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 if(NOT CMAKE_BUILD_TYPE)
 set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build" FORCE)
 endif()
@@ -37,17 +38,16 @@ endif()
 
 project(RAW2ASCII)
 
-file(GLOB_RECURSE SOURCES "src/*.cpp")
+file(GLOB_RECURSE SOURCES "src/*.cpp" "external/miniaudioImpl.cpp")
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_executable(${PROJECT_NAME} ${SOURCES})
 
-target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -Wpedantic)
+target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -Wpedantic -fsanitize=address)
+target_link_libraries(${PROJECT_NAME} PRIVATE -fsanitize=address)
 
-
-target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_20)
 
 target_include_directories(${PROJECT_NAME} PRIVATE include external)
 
@@ -80,6 +80,8 @@ add_custom_target(format
 COMMAND ${CLANG_FORMAT_EXE} -i -style=LLVM ${ALL_FILES}
 COMMENT "Formatting all source files with clang format..."
 )
+
+
 
 endif()
 

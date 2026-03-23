@@ -16,10 +16,10 @@ VideoDecoder::~VideoDecoder() {
   sws_freeContext(swsContext);
 }
 
-VideoDecoder::VideoDecoder(const std::string &path,
+VideoDecoder::VideoDecoder(
                            const utils::Options &options) {
-  if (avformat_open_input(&formatContext, path.c_str(), nullptr, nullptr) < 0) {
-    throw std::runtime_error("could not open file " + path);
+  if (avformat_open_input(&formatContext, options.file.c_str(), nullptr, nullptr) < 0) {
+    throw std::runtime_error("could not open file ");
   }
 
   if (avformat_find_stream_info(formatContext, nullptr) < 0) {
