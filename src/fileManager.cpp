@@ -5,7 +5,10 @@
 #include "video.hpp"
 #include <iostream>
 #include <stdexcept>
+#include <string>
+#include <fstream>
 #include <string_view>
+#include <array>
 #define GIF_SIGNATURE 6
 namespace ext {
 FileManager::FileManager(const std::string &path, int argc, char *argv[]) {
@@ -18,7 +21,7 @@ FileManager::FileManager(const std::string &path, int argc, char *argv[]) {
     options.setFullScreen();
   }
   if (isGif(file)) {
-    Gif gif(path, options);
+    const Gif gif(path, options);
     gif.renderGif();
   } else {
     if (path.ends_with(".mp4") || path.ends_with(".MOV")) {
@@ -34,12 +37,11 @@ FileManager::FileManager(const std::string &path, int argc, char *argv[]) {
 bool FileManager::isGif(std::ifstream &file) {
 
   file.seekg(0);
+  std::array<char, GIF_SIGNATURE> signature;
 
-  char signature[GIF_SIGNATURE];
+  file.read(signature.data(), GIF_SIGNATURE);
 
-  file.read(signature, GIF_SIGNATURE);
-
-  const std::string_view view(signature, 6);
+  const std::string_view view(signature.data(), 6);
   return view == "GIF87a" || view == "GIF89a";
 }
 } // namespace ext

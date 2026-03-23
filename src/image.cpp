@@ -34,8 +34,7 @@ void Image::renderImage(void) const {
   std::string buffer;
 
   if (opts.braille) {
-    
-    
+
   } else {
 
     for (int y = 0; y < height; y += stepY * 2) {

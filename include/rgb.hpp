@@ -15,4 +15,3 @@ struct RGB {
       : r(red), g(green), b(blue), alpha(255) {}
 };
 #pragma pack(pop)
-

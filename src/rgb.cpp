@@ -1,8 +1,8 @@
 #include "rgb.hpp"
-#include <cstdio>
-#include <iostream>
 #include <algorithm>
 #include <cmath>
+#include <cstdio>
+#include <iostream>
 bool RGB::operator==(const RGB &other) const {
   if (this->r == other.r && this->g == other.g && this->b == other.b)
     return true;
@@ -35,13 +35,12 @@ void RGB::printPixel(std::string &str, const RGB &bottom, RGB &prevTop,
     prevTop = RGB();
     prevBottom = RGB();
   } else {
- 
-    str += "\033[38;2;" + std::to_string(Rt) + ';' + std::to_string(Gt) + ';' + std::to_string(Bt) + 'm' +
-    "\033[48;2;" + std::to_string(Rb) + ';' + std::to_string(Gb) + ';' + std::to_string(Bb) + "m▀";
 
+    str += "\033[38;2;" + std::to_string(Rt) + ';' + std::to_string(Gt) + ';' +
+           std::to_string(Bt) + 'm' + "\033[48;2;" + std::to_string(Rb) + ';' +
+           std::to_string(Gb) + ';' + std::to_string(Bb) + "m▀";
   }
 
   prevTop = *this;
   prevBottom = bottom;
 }
-

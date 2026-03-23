@@ -7,20 +7,20 @@ extern "C" {
 #include <libswscale/swscale.h>
 }
 
+#include "fps.hpp"
 #include "rgb.hpp"
 #include "utils.hpp"
 #include <condition_variable>
+#include <memory>
 #include <mutex>
 #include <queue>
 #include <stdexcept>
 #include <stdint.h>
 #include <string>
 #include <vector>
-#include <memory>
-#include "fps.hpp"
-
+#include "audio.hpp"
 struct Frame {
- std::string data;
+  std::string data;
   double duration;
 
   Frame(std::string &&s, double dur) : data(std::move(s)), duration(dur) {}
@@ -41,14 +41,13 @@ private:
   std::mutex queueMutex;
   bool isDecodingFinished = false;
   FPS fps;
-  std::queue<Frame>readyData;
-
-  
+  std::queue<Frame> readyData;
+  AudioPlayer audio;
   std::unique_ptr<RGB[]> getReadyFrame(void);
-  RGB getPixel(int x, int y) const;
   std::string renderStream(RGB *currentFrame) const;
   void fillQueue(void);
-    bool getNextFrame(void);
+  bool getNextFrame(void);
+
 public:
   VideoDecoder(const std::string &path, const utils::Options &options);
 

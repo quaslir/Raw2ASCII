@@ -89,16 +89,15 @@ std::string calculateBraille(bool dots[2][4]) {
   return result;
 }
 
-std::string Options::renderBraille(const std::vector<RGB> & frame) const {
+std::string Options::renderBraille(const std::vector<RGB> &frame) const {
   std::string buffer;
   buffer += "\033[H";
 
   for (int y = 0; y < targetHeight; y += 4) {
     RGB prevbright, prevdark;
-    
+
     for (int x = 0; x < targetWidth; x += 2) {
 
-      long sumRed = 0, sumGreen = 0, sumBlue = 0;
       RGB dark, bright;
       int minLum = 256;
       int maxLum = -1;
@@ -111,72 +110,62 @@ std::string Options::renderBraille(const std::vector<RGB> & frame) const {
           if (currentX < targetWidth && currentY < targetHeight) {
 
             const RGB &p = frame[(y + dy) * targetWidth + (x + dx)];
-            sumRed += p.r;
-            sumGreen += p.g;
-            sumBlue += p.b;
 
             int lum = (p.r * 213 + p.g * 715 + p.b * 72) / 1000;
-            if(lum < minLum) {
+            if (lum < minLum) {
               minLum = lum;
               dark = p;
             }
-             if(lum > maxLum) {
+            if (lum > maxLum) {
               maxLum = lum;
               bright = p;
-             }
+            }
           }
         }
       }
-      
+
       int contrast = maxLum - minLum;
       int threshold = (minLum + maxLum) / 2;
       bool dots[2][4] = {0};
-      if(contrast > 25) {
-      for(int dy = 0; dy < 4; dy++) {
-        for(int dx = 0; dx < 2; dx++) {
+      if (contrast > 25) {
+        for (int dy = 0; dy < 4; dy++) {
+          for (int dx = 0; dx < 2; dx++) {
 
-           int currentX = dx + x;
-          int currentY = dy + y;
+            int currentX = dx + x;
+            int currentY = dy + y;
 
-          if (currentX < targetWidth && currentY < targetHeight) {
-            const RGB &p = frame[currentY * targetWidth + currentX];
-            int pLum = (p.r * 213 + p.g * 715 + p.b * 72) / 1000;
+            if (currentX < targetWidth && currentY < targetHeight) {
+              const RGB &p = frame[currentY * targetWidth + currentX];
+              int pLum = (p.r * 213 + p.g * 715 + p.b * 72) / 1000;
 
-            dots[dx][dy] = (pLum > threshold);
+              dots[dx][dy] = (pLum > threshold);
+            }
           }
         }
+
+      } else {
+        bright = dark;
+      }
+      if (bright != prevbright) {
+        buffer +=
+            "\033[38;2;" + bright.r + ';' + bright.g + ';' + bright.b + 'm';
       }
 
+      if (dark != prevdark) {
+        buffer += "\033[48;2;" + dark.r + ';' + dark.g + ';' + dark.b + 'm';
+      }
+
+      buffer += utils::calculateBraille(dots);
+
+      prevbright = bright;
+      prevdark = dark;
     }
-    else {
-      bright = dark;
-    }
-      if(bright != prevbright) {
-        buffer += "\033[38;2;" + bright.r + ';' +
-                  bright.g + ';' +
-                  bright.b + 'm';
-      }
+    buffer += "\033[0m\n";
+    prevbright = RGB();
+    prevdark = RGB();
+  }
 
-      if(dark != prevdark) {
-        buffer += "\033[48;2;" + dark.r + ';' +
-                  dark.g + ';' +
-                  dark.b + 'm';
-      }
-
-        buffer += utils::calculateBraille(dots);
-
-        prevbright = bright;
-        prevdark = dark;
-      }
-      buffer += "\033[0m\n";
-      prevbright = RGB();
-      prevdark = RGB();
-    }
-    
-
-
-return buffer;
-
+  return buffer;
 }
 
 } // namespace utils

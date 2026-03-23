@@ -1,9 +1,9 @@
 #include "video.hpp"
 #include <chrono>
+#include <cstring>
 #include <iostream>
 #include <sstream>
 #include <thread>
-#include <cstring>
 VideoDecoder::~VideoDecoder() {
 
   av_packet_free(&packet);
@@ -12,6 +12,8 @@ VideoDecoder::~VideoDecoder() {
   avcodec_free_context(&codecContext);
 
   avformat_close_input(&formatContext);
+  av_free(buffer);
+  sws_freeContext(swsContext);
 }
 
 VideoDecoder::VideoDecoder(const std::string &path,
@@ -24,23 +26,28 @@ VideoDecoder::VideoDecoder(const std::string &path,
     throw std::runtime_error("could not find stream data");
   }
 
-  const AVCodec *codec = nullptr;
+  const AVCodec *videoCodec = nullptr;
   videoStreamIndex =
-      av_find_best_stream(formatContext, AVMEDIA_TYPE_VIDEO, -1, -1, &codec, 0);
+      av_find_best_stream(formatContext, AVMEDIA_TYPE_VIDEO, -1, -1, &videoCodec, 0);
 
   if (videoStreamIndex < 0) {
     throw std::runtime_error("video data could not be found");
   }
-  codecContext = avcodec_alloc_context3(codec);
+  codecContext = avcodec_alloc_context3(videoCodec);
   if (avcodec_parameters_to_context(
           codecContext, formatContext->streams[videoStreamIndex]->codecpar) <
       0) {
     throw std::runtime_error("could not copy codec params");
   }
 
-  if (avcodec_open2(codecContext, codec, nullptr) < 0) {
+  if (avcodec_open2(codecContext, videoCodec, nullptr) < 0) {
     throw std::runtime_error("could not open codec");
   }
+
+  audio.getFormatContext = [this]() {
+    return formatContext;
+  };
+  audio.init();
   opts = options;
 
   packet = av_packet_alloc();
@@ -53,10 +60,9 @@ VideoDecoder::VideoDecoder(const std::string &path,
 
   int bytes = av_image_get_buffer_size(AV_PIX_FMT_RGBA, opts.targetWidth,
                                        opts.targetHeight, 1);
-  buffer = static_cast<uint8_t *> (av_malloc(bytes));
+  buffer = static_cast<uint8_t *>(av_malloc(bytes));
   av_image_fill_arrays(rgbFrame->data, rgbFrame->linesize, buffer,
-                       AV_PIX_FMT_RGBA, opts.targetWidth, opts.targetHeight,
-                       1);
+                       AV_PIX_FMT_RGBA, opts.targetWidth, opts.targetHeight, 1);
 }
 
 bool VideoDecoder::getNextFrame(void) {
@@ -70,8 +76,6 @@ bool VideoDecoder::getNextFrame(void) {
         return false;
       }
 
-
-
       response = avcodec_receive_frame(codecContext, frame);
 
       if (response == AVERROR(EAGAIN) || response == AVERROR_EOF) {
@@ -82,20 +86,17 @@ bool VideoDecoder::getNextFrame(void) {
         return false;
       }
 
-
-      
       double pts = 0;
 
-      if(frame->best_effort_timestamp != AV_NOPTS_VALUE) {
+      if (frame->best_effort_timestamp != AV_NOPTS_VALUE) {
         AVRational tb = formatContext->streams[videoStreamIndex]->time_base;
         pts = frame->best_effort_timestamp * av_q2d(tb);
       }
 
-      
       sws_scale(swsContext, frame->data, frame->linesize, 0,
                 codecContext->height, rgbFrame->data, rgbFrame->linesize);
-                std::unique_ptr<RGB[]> readyFrame = getReadyFrame();
-                std::string toASCII = renderStream(readyFrame.get());
+      std::unique_ptr<RGB[]> readyFrame = getReadyFrame();
+      std::string toASCII = renderStream(readyFrame.get());
       {
         std::lock_guard<std::mutex> lock(queueMutex);
         readyData.push(Frame(std::move(toASCII), pts));
@@ -104,6 +105,9 @@ bool VideoDecoder::getNextFrame(void) {
       av_packet_unref(packet);
       return true;
     }
+    else if(packet->stream_index == audio.frameIndex) {
+      audio.decode(packet);
+    }
 
     av_packet_unref(packet);
   }
@@ -111,24 +115,14 @@ bool VideoDecoder::getNextFrame(void) {
   return false;
 }
 
-RGB VideoDecoder::getPixel(int x, int y) const {
-  int offset = y * rgbFrame->linesize[0] + x * 3;
-
-  uint8_t tr = rgbFrame->data[0][offset];
-  uint8_t tg = rgbFrame->data[0][offset + 1];
-  uint8_t tb = rgbFrame->data[0][offset + 2];
-
-  return RGB(tr, tg, tb);
-}
-
 std::unique_ptr<RGB[]> VideoDecoder::getReadyFrame(void) {
   size_t size = opts.targetWidth * opts.targetHeight;
   std::unique_ptr<RGB[]> data = std::make_unique<RGB[]>(size);
 
-  uint8_t *dst = reinterpret_cast<uint8_t*>(data.get());
+  uint8_t *dst = reinterpret_cast<uint8_t *>(data.get());
   uint8_t *src = rgbFrame->data[0];
 
-  for(int y = 0; y < opts.targetHeight; y++) {
+  for (int y = 0; y < opts.targetHeight; y++) {
     std::memcpy(dst, src, opts.targetWidth * 4);
 
     src += rgbFrame->linesize[0];
@@ -139,7 +133,7 @@ std::unique_ptr<RGB[]> VideoDecoder::getReadyFrame(void) {
   return data;
 }
 
-std::string VideoDecoder::renderStream(RGB * currentFrame) const {
+std::string VideoDecoder::renderStream(RGB *currentFrame) const {
 
   std::string buffer;
   buffer.reserve(opts.targetHeight * opts.targetWidth * 20);
@@ -167,12 +161,11 @@ void VideoDecoder::renderVideo(void) {
     isDecodingFinished = true;
   });
 
-    auto startTime = std::chrono::steady_clock::now();
+  auto startTime = std::chrono::steady_clock::now();
   std::cout << "\033[2J\033[?25l";
-  
+
   while (true) {
-    auto frameDur = std::chrono::microseconds(static_cast<long long>(1000000.0 / 1));
-    
+
     Frame currentFrame;
     {
       std::lock_guard<std::mutex> lock(queueMutex);
@@ -191,26 +184,21 @@ void VideoDecoder::renderVideo(void) {
       continue;
     }
 
-
     auto now = std::chrono::steady_clock::now();
     std::chrono::duration<double> elapsed = now - startTime;
     double delay = currentFrame.duration - elapsed.count();
 
-    if(delay > 0.005) {
+    if (delay > 0.005) {
       std::this_thread::sleep_for(std::chrono::duration<double>(delay));
-    } else if(delay < -0.05) {
+    } else if (delay < -0.05) {
       continue;
     }
 
     fps.update();
-  std::fwrite(currentFrame.data.c_str(),1 , currentFrame.data.size(), stdout);
-   std::fwrite("\033[H", 1, 3, stdout);
-   std::string fpsStr = fps.display() + "\033[K\n";
-   std::fwrite(fpsStr.data(), 1, fpsStr.size(), stdout);
-
-  
-
-    
+    std::fwrite(currentFrame.data.c_str(), 1, currentFrame.data.size(), stdout);
+    std::fwrite("\033[H", 1, 3, stdout);
+    std::string fpsStr = fps.display() + "\033[K\n";
+    std::fwrite(fpsStr.data(), 1, fpsStr.size(), stdout);
   }
 
   if (decoder.joinable())
@@ -225,4 +213,3 @@ void VideoDecoder::fillQueue(void) {
     }
   }
 }
-

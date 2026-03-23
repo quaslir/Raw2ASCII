@@ -72,8 +72,7 @@ void Gif::renderGif(void) const {
     std::cout << "\033[H";
     std::string buffer;
 
-
-      for (int y = 0; y < height; y += stepY * 2) {
+    for (int y = 0; y < height; y += stepY * 2) {
       RGB prevTop(0, 0, 0);
       RGB prevBottom(0, 0, 0);
       for (int x = 0; x < width; x += stepX) {
@@ -87,12 +86,9 @@ void Gif::renderGif(void) const {
       buffer += "\x1b[0m\n";
     }
 
-    
-
     std::cout << buffer.c_str();
     std::this_thread::sleep_for(std::chrono::milliseconds(data[i].delay));
   }
 
   std::cout << "\033[?25h" << std::endl;
 }
-

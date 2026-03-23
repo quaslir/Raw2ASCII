@@ -1,10 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
 
-if(APPLE)
-    set(CMAKE_C_COMPILER "/opt/homebrew/bin/gcc-15")
-    set(CMAKE_CXX_COMPILER "/opt/homebrew/bin/g++-15")
-endif()
-
 
 if(NOT CMAKE_BUILD_TYPE)
 set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build" FORCE)
@@ -32,7 +27,7 @@ find_program(CLANG_TIDY_EXE NAMES "clang-tidy")
 if(CLANG_TIDY_EXE)
 
 set(CMAKE_CXX_CLANG_TIDY
-${CLANG_TIDY_EXE} "-checks=*,bugprone-*,modernize-*,performance-*")
+${CLANG_TIDY_EXE} "-checks=*,bugprone-*,performance-*")
 
 endif()
 
@@ -56,10 +51,15 @@ target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_20)
 
 target_include_directories(${PROJECT_NAME} PRIVATE include external)
 
+if(APPLE)
+    target_link_libraries(${PROJECT_NAME} PRIVATE "-framework CoreFoundation")
+    target_link_libraries(${PROJECT_NAME} PRIVATE "-framework CoreAudio")
+    target_link_libraries(${PROJECT_NAME} PRIVATE "-framework AudioToolbox")
+endif()
 
 find_package(PkgConfig REQUIRED)
 
-set(FFMPEG_MODULES libavcodec libavformat libavutil libswscale)
+set(FFMPEG_MODULES libavcodec libavformat libavutil libswscale libswresample)
 
 foreach(module ${FFMPEG_MODULES})
     pkg_check_modules(${module} REQUIRED ${module})
