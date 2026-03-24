@@ -9,7 +9,6 @@ struct RGB {
                   RGB &prevBottom) const;
   bool operator==(const RGB &other) const;
   bool operator!=(const RGB &other) const;
-
   RGB() : r(0), g(0), b(0), alpha(0) {}
   RGB(uint8_t red, uint8_t green, uint8_t blue)
       : r(red), g(green), b(blue), alpha(255) {}

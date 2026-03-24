@@ -3,13 +3,15 @@
 #include <iostream>
 #include <sys/ioctl.h>
 #include <unistd.h>
+#include <fstream>
 namespace utils {
 
 Options::Options(int argc, char *argv[]) { parse(argc, argv); }
 void Options::parse(int argc, char *argv[]) {
 
   if (argc < 2) {
-    throw std::runtime_error("input file was not provided");
+    this->file = "-";
+    return;
   }
     
   for (int i = 1; i < argc; i++) {
@@ -180,5 +182,24 @@ std::vector<char> readStdin(void) {
   return std::vector<char>((std::istreambuf_iterator<char>(std::cin)),
   std::istreambuf_iterator<char>());
 }
+
+std::vector<char> readFile(const std::string &file) {
+  std::ifstream f(file, std::ios::binary | std::ios::ate);
+
+  if(!f.is_open()) {
+    throw std::invalid_argument("could not read file");
+  }
+
+  std::streamsize size = f.tellg();
+  f.seekg(0, std::ios::beg);
+
+  std::vector<char> data (size);
+
+  if(f.read(data.data(), size)) {
+    return data;
+  }
+return {};
+
+} 
 
 } // namespace utils

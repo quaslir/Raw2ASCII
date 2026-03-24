@@ -27,21 +27,17 @@ std::vector<char> Gif::readGif(const std::string &path) {
   return buffer;
 }
 
-Gif::Gif(const std::string &path, const utils::Options &options) {
+Gif::Gif(std::vector<char>&&buffer, const utils::Options &options) {
   int w, h, count, channels;
   int *delays = nullptr;
 
-  std::vector<char> buffer;
-  if(options.readStdin) {
-    buffer = utils::readStdin();
-  }
-  else buffer = readGif(path);
+
   unsigned char *raw =
       stbi_load_gif_from_memory(reinterpret_cast<const stbi_uc*>(buffer.data()), static_cast<int>(buffer.size()),
                                 &delays, &w, &h, &count, &channels, 4);
 
   if (!raw) {
-    throw std::runtime_error("Failed to load GIF: " + path);
+    throw std::runtime_error("Failed to load GIF");
   }
 
   width = w;

@@ -11,6 +11,7 @@ bool RGB::operator==(const RGB &other) const {
 
 bool RGB::operator!=(const RGB &other) const { return !(*this == other); }
 
+
 void RGB::printPixel(std::string &str, const RGB &bottom, RGB &prevTop,
                      RGB &prevBottom) const {
 
@@ -20,13 +21,11 @@ void RGB::printPixel(std::string &str, const RGB &bottom, RGB &prevTop,
   int Rb = (bottom.r * bottom.alpha + 128) / 255;
   int Gb = (bottom.g * bottom.alpha + 128) / 255;
   int Bb = (bottom.b * bottom.alpha + 128) / 255;
-
   bool isTransparent = (alpha < 10 && bottom.alpha < 10);
-
+  bool prevTransparent = (prevTop.alpha < 10 && prevBottom.alpha < 10);
   if (prevTop.r == Rt && prevTop.g == Gt && prevTop.b == Bt &&
-      prevBottom.r == Rb && prevBottom.g == Gb && prevBottom.b == Bb &&
-      prevTop.alpha == (isTransparent ? 0 : 255)) {
-    str += (isTransparent ? " " : "▀");
+      prevBottom.r == Rb && prevBottom.g == Gb && prevBottom.b == Bb && isTransparent == prevTransparent) {
+    str += (isTransparent ? " ": "▀");
     return;
   }
 

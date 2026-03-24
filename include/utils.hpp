@@ -23,4 +23,5 @@ struct Options {
 
 std::string calculateBraille(bool dots[2][4]);
 std::vector<char> readStdin(void);
+std::vector<char> readFile(const std::string &file);
 } // namespace utils
