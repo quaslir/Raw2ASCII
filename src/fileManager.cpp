@@ -46,7 +46,7 @@ void FileManager::processFromStdin(void) const {
   std::vector<char> data = utils::readStdin();
 
   std::vector<char> windowGif(data.begin(), data.begin() + 6);
-  
+
 if(isGif(windowGif)) {
 handleGif(std::move(data));
 }
@@ -87,7 +87,6 @@ bool FileManager::isGif(const std::vector<char> &file)const {
 }
 
 void FileManager::handleGif(std::vector<char>&&data) const {
-
 Gif gif(std::move(data), opts);
 gif.renderGif();
 }

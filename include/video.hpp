@@ -47,7 +47,6 @@ private:
   std::string renderStream(RGB *currentFrame) const;
   void fillQueue(void);
   bool getNextFrame(void);
-
 public:
   VideoDecoder(const utils::Options &options);
 

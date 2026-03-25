@@ -4,6 +4,7 @@
 #include <iostream>
 #include <sstream>
 #include <thread>
+#include <fstream>
 VideoDecoder::~VideoDecoder() {
 
   av_packet_free(&packet);
@@ -147,7 +148,7 @@ std::string VideoDecoder::renderStream(RGB *currentFrame) const {
       int bottomIdx = (y + 1 < opts.targetHeight) ? (y + 1) : y;
       const RGB &bottom = currentFrame[(bottomIdx)*opts.targetWidth + x];
 
-      top.printPixel(buffer, bottom, prevTop, prevBottom);
+      top.printPixel(buffer, bottom, prevTop, prevBottom, opts.threshold);
     }
     buffer += "\033[0m\n";
   }
@@ -162,7 +163,12 @@ void VideoDecoder::renderVideo(void) {
   });
 
   auto startTime = std::chrono::steady_clock::now();
+  if(opts.outputPath.empty()) {
   std::cout << "\033[2J\033[?25l";
+  }
+  else {
+    opts.writeFile("\033[2J\033[?25l");
+  }
 
   while (true) {
 
@@ -194,16 +200,31 @@ void VideoDecoder::renderVideo(void) {
       continue;
     }
 
-    fps.update();
+    if(opts.outputPath.empty()) {
     std::fwrite(currentFrame.data.c_str(), 1, currentFrame.data.size(), stdout);
     std::fwrite("\033[H", 1, 3, stdout);
+    if(opts.fps) {
+      fps.update();
     std::string fpsStr = fps.display() + "\033[K\n";
     std::fwrite(fpsStr.data(), 1, fpsStr.size(), stdout);
+    }
+    }
+    else {
+      opts.writeFile(std::move(currentFrame.data));
+      opts.writeFile("\033[H");
+    }
   }
 
   if (decoder.joinable())
     decoder.join();
-  std::cout << "\033[?25h";
+
+  if(opts.outputPath.empty()) {
+      std::cout << "\033[?25h";
+  }
+  else {
+    opts.writeFile("\033[?25h");
+  }
+
 }
 
 void VideoDecoder::fillQueue(void) {
@@ -213,3 +234,4 @@ void VideoDecoder::fillQueue(void) {
     }
   }
 }
+

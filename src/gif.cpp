@@ -69,12 +69,13 @@ void Gif::renderGif(void) const {
   std::cout << "\033[2J\033[?25l";
 
   for (size_t i = 0; i < data.size(); i++) {
-    std::cout << "\033[H";
-    std::string buffer;
+    std::string buffer ="\033[H";
 
     for (int y = 0; y < height; y += stepY * 2) {
       RGB prevTop(0, 0, 0);
       RGB prevBottom(0, 0, 0);
+      prevTop.alpha = 0;
+      prevBottom.alpha = 0;
       for (int x = 0; x < width; x += stepX) {
 
         const RGB &top = data[i].frame[y * width + x];
@@ -83,12 +84,18 @@ void Gif::renderGif(void) const {
 
         top.printPixel(buffer, bottom, prevTop, prevBottom);
       }
-      buffer += "\x1b[0m\n";
+      buffer += "\033[0m\n";
     }
+
+    if(opts.outputPath.empty()) {
 
     std::cout << buffer.c_str();
     std::this_thread::sleep_for(std::chrono::milliseconds(data[i].delay));
+    } else {
+      opts.writeFile(std::move(buffer));
+    }
   }
 
   std::cout << "\033[?25h" << std::endl;
 }
+

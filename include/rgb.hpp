@@ -6,7 +6,7 @@ struct RGB {
   uint8_t r, g, b, alpha;
 
   void printPixel(std::string &str, const RGB &bottom, RGB &prevTop,
-                  RGB &prevBottom) const;
+                  RGB &prevBottom, int th = 0) const;
   bool operator==(const RGB &other) const;
   bool operator!=(const RGB &other) const;
   RGB() : r(0), g(0), b(0), alpha(0) {}

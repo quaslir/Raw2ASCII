@@ -6,11 +6,14 @@
 #include <fstream>
 namespace utils {
 
-Options::Options(int argc, char *argv[]) { parse(argc, argv); }
+Options::Options(int argc, char *argv[]) {
+  setFullScreen();
+   parse(argc, argv);
+   }
 void Options::parse(int argc, char *argv[]) {
 
   if (argc < 2) {
-    this->file = "-";
+    readStdin = true;
     return;
   }
     
@@ -25,7 +28,6 @@ void Options::parse(int argc, char *argv[]) {
         targetWidth = w;
       } catch (const std::exception &err) {
         std::cerr << err.what() << std::endl;
-        targetWidth = 1;
       }
     }
 
@@ -38,12 +40,11 @@ void Options::parse(int argc, char *argv[]) {
         targetHeight = h;
       } catch (const std::exception &err) {
         std::cerr << err.what() << std::endl;
-        targetHeight = 1;
       }
     }
 
-    else if (param.starts_with("--fit")) {
-      setFullScreen();
+    else if (param.starts_with("-f") || param.starts_with("--fps")) {
+      fps = true;
     }
 
     else if ((param.starts_with("-o")) || (param.starts_with("--output="))) {
@@ -56,6 +57,15 @@ void Options::parse(int argc, char *argv[]) {
     else if (param == "--braille" || param == "-b") {
       braille = true;
     }
+    else if(param.starts_with("-t") || param.starts_with("--threshold")) {
+      size_t index = param.starts_with("-t") ? std::string{"-t"}.length() : std::string{"--threshold"}.length();
+      try {
+        int th = std::stoi(std::string{param.substr(index)});
+        threshold = th;
+      } catch (const std::exception &err) {
+        std::cerr << err.what() << std::endl;
+      }
+    }
     else {
       if(param == "-") {
         readStdin = true;
@@ -63,13 +73,17 @@ void Options::parse(int argc, char *argv[]) {
       file = param;
     }
   }
+
+  if(file.empty()) {
+    readStdin = true;
+  }
 }
 
 void Options::setFullScreen(void) {
   struct winsize window;
   ioctl(STDOUT_FILENO, TIOCGWINSZ, &window);
   targetWidth = window.ws_col * 0.8;
-  targetHeight = window.ws_row * 0.8;
+  targetHeight = window.ws_row;
 }
 std::string calculateBraille(bool dots[2][4]) {
   int byte = 0;
@@ -202,4 +216,16 @@ return {};
 
 } 
 
+void Options::writeFile(std::string &&buffer) const {
+  std::ofstream file(outputPath, std::ios::app);
+  file << buffer;
+}
+
+bool isSimilar(const RGB& p1, const RGB&p2, int th) {
+    int dr = p1.r - p2.r;
+  int dg = p1.g - p2.g;
+  int db = p1.b - p2.b;
+
+  return (dr * dr + dg * dg + db * db) < (th * th);
+}
 } // namespace utils
