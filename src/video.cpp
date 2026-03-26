@@ -133,10 +133,10 @@ std::unique_ptr<RGB[]> VideoDecoder::getReadyFrame(void) {
   return data;
 }
 
-std::string VideoDecoder::renderStream(RGB *currentFrame) const {
+std::string VideoDecoder::renderStream(const RGB *currentFrame) const {
 
-  std::string buffer;
-  buffer.reserve(opts.targetHeight * opts.targetWidth * 20);
+  std::string currentFrameBuffer;
+  currentFrameBuffer.reserve(opts.targetHeight * opts.targetWidth * 20);
 
   for (int y = 0; y < opts.targetHeight; y += 2) {
     RGB prevBottom;
@@ -147,12 +147,12 @@ std::string VideoDecoder::renderStream(RGB *currentFrame) const {
       int bottomIdx = (y + 1 < opts.targetHeight) ? (y + 1) : y;
       const RGB &bottom = currentFrame[(bottomIdx)*opts.targetWidth + x];
 
-      top.printPixel(buffer, bottom, prevTop, prevBottom, opts.threshold);
+      top.printPixel(currentFrameBuffer, bottom, prevTop, prevBottom, opts.threshold);
     }
-    buffer += "\033[0m\n";
+    currentFrameBuffer += "\033[0m\n";
   }
 
-  return buffer;
+  return currentFrameBuffer;
 }
 
 void VideoDecoder::renderVideo(void) {

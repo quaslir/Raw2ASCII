@@ -8,24 +8,6 @@
 #include <string>
 #include <thread>
 #include <vector>
-std::vector<char> Gif::readGif(const std::string &path) {
-  std::ifstream file(path, std::ios::binary | std::ios::ate);
-
-  if (!file.is_open()) {
-    throw std::runtime_error("file " + path + " could not be found");
-  }
-
-  std::streamsize size = file.tellg();
-  file.seekg(0, std::ios::beg);
-
-  std::vector<char> buffer;
-  buffer.resize(size);
-
-  if (!file.read(reinterpret_cast<char *>(buffer.data()), size)) {
-    throw std::runtime_error("could not read file " + path);
-  }
-  return buffer;
-}
 
 Gif::Gif(std::vector<char> &&buffer, const utils::Options &options) {
   int w, h, count, channels;
@@ -47,7 +29,7 @@ Gif::Gif(std::vector<char> &&buffer, const utils::Options &options) {
   data.resize(count);
 
   for (int i = 0; i < count; i++) {
-    unsigned char *framePtr = raw + (i * frameSize);
+    const unsigned char *framePtr = raw + (i * frameSize);
 
     data[i].delay = delays[i];
     data[i].frame.resize(width * height);
@@ -91,7 +73,7 @@ void Gif::renderGif(void) const {
   }
     if (opts.outputPath.empty()) {
 
-      std::cout << buffer.c_str();
+      std::cout << buffer;
       std::this_thread::sleep_for(std::chrono::milliseconds(data[i].delay));
     } else {
       opts.writeFile(std::move(buffer));

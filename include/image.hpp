@@ -16,7 +16,7 @@ private:
   void processRaw(unsigned char *raw);
 
 public:
-  Image(const utils::Options &options);
+  explicit Image(const utils::Options &options);
   Image(const utils::Options &options, const std::vector<char> &buffer);
   void renderImage(void) const;
 };

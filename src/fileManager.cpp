@@ -34,7 +34,7 @@ void FileManager::processFromFile(void) const {
     Image img(opts);
     img.renderImage();
   } else {
-    VideoDecoder video(opts);
+    VideoDecoder video{opts};
     video.renderVideo();
   }
 }
@@ -57,7 +57,7 @@ void FileManager::processFromStdin(void) const {
   }
 }
 
-bool FileManager::isGif(std::ifstream &file) const {
+bool isGif(std::ifstream &file) {
 
   file.seekg(0);
   std::array<char, GIF_SIGNATURE> signature;
@@ -68,7 +68,7 @@ bool FileManager::isGif(std::ifstream &file) const {
   return view == "GIF87a" || view == "GIF89a";
 }
 
-bool FileManager::isGif(const std::vector<char> &file) const {
+bool isGif(const std::vector<char> &file) {
 
   std::array<char, GIF_SIGNATURE> signature;
 
@@ -85,7 +85,7 @@ void FileManager::handleGif(std::vector<char> &&data) const {
   gif.renderGif();
 }
 
-bool FileManager::isImg(const std::vector<char> &data) const {
+bool isImg(const std::vector<char> &data) {
   int w, h, ch;
 
   int result = stbi_info_from_memory(
@@ -94,7 +94,7 @@ bool FileManager::isImg(const std::vector<char> &data) const {
   return result == 1;
 }
 
-bool FileManager::isImg(const std::string &file) const {
+bool isImg(const std::string &file) {
   int w, h, ch;
   return stbi_info(file.c_str(), &w, &h, &ch);
 }

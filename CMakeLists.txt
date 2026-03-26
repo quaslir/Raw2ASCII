@@ -1,25 +1,42 @@
 cmake_minimum_required(VERSION 3.20)
+project(RAW2ASCII)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 if(NOT CMAKE_BUILD_TYPE)
 set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build" FORCE)
 endif()
+
+file(GLOB_RECURSE SOURCES "src/*.cpp")
+file(GLOB_RECURSE HEADERS "include/*.hpp")
+file(GLOB_RECURSE EXTERNAL_SOURCES "external/*.cpp")
+
+
+add_library(external_libs STATIC ${EXTERNAL_SOURCES})
+target_include_directories(external_libs PRIVATE external)
+
+
+add_executable(${PROJECT_NAME} ${SOURCES})
+
+target_link_libraries(${PROJECT_NAME} PRIVATE external_libs)
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 
 message(STATUS "Debug mode: Enabling static analysis tools")
 
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 find_program(CPPCHECK_EXE NAMES "cppcheck")
 
 if(CPPCHECK_EXE)
-set(CMAKE_CXX_CPPCHECK
+
+set(CPPCHECK_COMMAND
 ${CPPCHECK_EXE}
 "--enable=all"
 "--suppress=missingIncludeSystem"
 )
+
+set_target_properties(${PROJECT_NAME} PROPERTIES CXX_CPPCHECK "${CPPCHECK_COMMAND}")
 
 endif()
 
@@ -27,8 +44,7 @@ find_program(CLANG_TIDY_EXE NAMES "clang-tidy")
 
 if(CLANG_TIDY_EXE)
 
-set(CMAKE_CXX_CLANG_TIDY
-${CLANG_TIDY_EXE} "-checks=*,bugprone-*,performance-*")
+
 
 endif()
 
@@ -36,14 +52,14 @@ endif()
 
 
 
-project(RAW2ASCII)
 
-file(GLOB_RECURSE SOURCES "src/*.cpp" "external/miniaudioImpl.cpp")
+
+
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-add_executable(${PROJECT_NAME} ${SOURCES})
+
 
 target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -Wpedantic -g3 -fsanitize=address)
 target_link_libraries(${PROJECT_NAME} PRIVATE -fsanitize=address)

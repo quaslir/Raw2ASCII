@@ -6,11 +6,11 @@
 #include <unistd.h>
 namespace utils {
 
-Options::Options(int argc, char *argv[]) {
+Options::Options(int argc,char *argv[]) {
   setFullScreen();
   parse(argc, argv);
 }
-void Options::parse(int argc, char *argv[]) {
+void Options::parse(int argc,char *argv[]) {
 
   if (argc < 2) {
     readStdin = true;
@@ -221,8 +221,8 @@ std::vector<char> readFile(const std::string &file) {
 }
 
 void Options::writeFile(std::string &&buffer) const {
-  std::ofstream file(outputPath, std::ios::app);
-  file << buffer;
+  std::ofstream targetFile(outputPath, std::ios::app);
+  targetFile << buffer;
 }
 
 bool isSimilar(const RGB &p1, const RGB &p2, int th) {

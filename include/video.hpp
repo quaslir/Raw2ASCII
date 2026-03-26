@@ -44,12 +44,13 @@ private:
   std::queue<Frame> readyData;
   AudioPlayer audio;
   std::unique_ptr<RGB[]> getReadyFrame(void);
-  std::string renderStream(RGB *currentFrame) const;
+
+  std::string renderStream(const RGB *currentFrame) const;
   void fillQueue(void);
   bool getNextFrame(void);
 
 public:
-  VideoDecoder(const utils::Options &options);
+  explicit VideoDecoder(const utils::Options &options);
 
   void renderVideo(void);
   ~VideoDecoder();
