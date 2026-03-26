@@ -17,6 +17,6 @@ private:
 
 
 public:
-  Gif(std::vector<char> &&buffer, const utils::Options &options);
+  Gif(std::string &&buffer, const utils::Options &options);
   void renderGif(void) const;
 };

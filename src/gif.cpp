@@ -9,7 +9,7 @@
 #include <thread>
 #include <vector>
 
-Gif::Gif(std::vector<char> &&buffer, const utils::Options &options) {
+Gif::Gif(std::string &&buffer, const utils::Options &options) {
   int w, h, count, channels;
   int *delays = nullptr;
 

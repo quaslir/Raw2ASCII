@@ -22,7 +22,7 @@ Image::Image(const utils::Options &options) : data(nullptr, stbi_image_free) {
   }
 }
 
-Image::Image(const utils::Options &options, const std::vector<char> &buffer)
+Image::Image(const utils::Options &options, std::string &&buffer)
     : data(nullptr, stbi_image_free) {
   unsigned char *raw = stbi_load_from_memory(
       reinterpret_cast<const stbi_uc *>(buffer.data()),

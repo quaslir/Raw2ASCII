@@ -26,8 +26,9 @@ struct Options {
 };
 
 std::string calculateBraille(bool dots[2][4]);
-std::vector<char> readStdin(void);
-std::vector<char> readFile(const std::string &file);
+std::string readStdin(void);
+std::string readFile(const std::string &file);
 bool isSimilar(const RGB &p1, const RGB &p2, int th);
+
 
 } // namespace utils

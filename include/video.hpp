@@ -19,12 +19,18 @@ extern "C" {
 #include <stdint.h>
 #include <string>
 #include <vector>
+#include <functional>
 struct Frame {
   std::string data;
   double duration;
 
   Frame(std::string &&s, double dur) : data(std::move(s)), duration(dur) {}
   Frame() = default;
+};
+
+struct Header{
+  std::string data;
+  size_t offset = 0;
 };
 
 class VideoDecoder {
@@ -43,15 +49,20 @@ private:
   FPS fps;
   std::queue<Frame> readyData;
   AudioPlayer audio;
+  Header header;
+
   std::unique_ptr<RGB[]> getReadyFrame(void);
 
   std::string renderStream(const RGB *currentFrame) const;
   void fillQueue(void);
   bool getNextFrame(void);
+  void loadFromStdin(void);
 
 public:
+  void open(void);
+  void setHeader(std::string && headerBuffer);
   explicit VideoDecoder(const utils::Options &options);
-
+  static int read_packet(void *opaque, uint8_t *buf, int buf_size);
   void renderVideo(void);
   ~VideoDecoder();
 };

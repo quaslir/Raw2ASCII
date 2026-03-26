@@ -13,7 +13,7 @@ private:
   void processFromStdin(void) const;
   void processFromFile(void) const;
 
-  void handleGif(std::vector<char> &&data) const;
+  void handleGif(std::string &&data) const;
 };
   bool isGif(std::ifstream &file);
   bool isGif(const std::vector<char> &file);

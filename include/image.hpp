@@ -17,6 +17,6 @@ private:
 
 public:
   explicit Image(const utils::Options &options);
-  Image(const utils::Options &options, const std::vector<char> &buffer);
+  Image(const utils::Options &options, std::string &&buffer);
   void renderImage(void) const;
 };

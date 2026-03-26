@@ -12,16 +12,24 @@ VideoDecoder::~VideoDecoder() {
   av_frame_free(&rgbFrame);
   avcodec_free_context(&codecContext);
 
+  if(opts.readStdin) {
+    av_freep(&formatContext->pb->buffer);
+    avio_context_free(&formatContext->pb);
+  }
   avformat_close_input(&formatContext);
   av_free(buffer);
   sws_freeContext(swsContext);
 }
 
-VideoDecoder::VideoDecoder(const utils::Options &options) {
-  if (avformat_open_input(&formatContext, options.file.c_str(), nullptr,
+void VideoDecoder::open(void) {
+if(!opts.readStdin) {
+  if (avformat_open_input(&formatContext, opts.file.c_str(), nullptr,
                           nullptr) < 0) {
     throw std::runtime_error("could not open file ");
   }
+} else {
+  loadFromStdin();
+}
 
   if (avformat_find_stream_info(formatContext, nullptr) < 0) {
     throw std::runtime_error("could not find stream data");
@@ -47,7 +55,6 @@ VideoDecoder::VideoDecoder(const utils::Options &options) {
 
   audio.getFormatContext = [this]() { return formatContext; };
 
-  opts = options;
   if(opts.outputPath.empty()) {
   audio.init();
   }
@@ -64,6 +71,10 @@ VideoDecoder::VideoDecoder(const utils::Options &options) {
   buffer = static_cast<uint8_t *>(av_malloc(bytes));
   av_image_fill_arrays(rgbFrame->data, rgbFrame->linesize, buffer,
                        AV_PIX_FMT_RGBA, opts.targetWidth, opts.targetHeight, 1);
+}
+
+VideoDecoder::VideoDecoder(const utils::Options &options) : opts(options) {
+  formatContext = avformat_alloc_context();
 }
 
 bool VideoDecoder::getNextFrame(void) {
@@ -134,7 +145,8 @@ std::unique_ptr<RGB[]> VideoDecoder::getReadyFrame(void) {
 }
 
 std::string VideoDecoder::renderStream(const RGB *currentFrame) const {
-
+  if(!currentFrame) return "";
+  
   std::string currentFrameBuffer;
   currentFrameBuffer.reserve(opts.targetHeight * opts.targetWidth * 20);
 
@@ -202,6 +214,7 @@ void VideoDecoder::renderVideo(void) {
       std::fwrite(currentFrame.data.c_str(), 1, currentFrame.data.size(),
                   stdout);
       std::fwrite("\033[H", 1, 3, stdout);
+      std::fflush(stdout);
       if (opts.fps) {
         fps.update();
         std::string fpsStr = fps.display() + "\033[K\n";
@@ -229,4 +242,40 @@ void VideoDecoder::fillQueue(void) {
       std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
   }
+}
+
+int VideoDecoder::read_packet(void *opaque, uint8_t *buf, int buf_size) {
+  auto * self = reinterpret_cast<VideoDecoder*>(opaque);
+  if(self->header.offset < self->header.data.size()) {
+    size_t available = self->header.data.size() - self->header.offset;
+    size_t to_copy = std::min(static_cast<size_t> (buf_size), available);
+
+    std::memcpy(buf, self->header.data.data() + self->header.offset, to_copy);
+    self->header.offset += to_copy;
+    return static_cast<int>(to_copy);
+  }
+
+  size_t size = std::fread(buf, 1, buf_size, stdin);
+  if(size == 0) return AVERROR_EOF;
+  return static_cast<int>(size);
+}
+
+void VideoDecoder::loadFromStdin(void) {
+const std::size_t avio_ctx_buffer_size = 4096;
+unsigned char * avio_ctx_buffer = reinterpret_cast<unsigned char *>(av_malloc(avio_ctx_buffer_size));
+
+AVIOContext * avio_ctx = avio_alloc_context(avio_ctx_buffer, avio_ctx_buffer_size, 
+0, this, &read_packet,nullptr, nullptr);
+
+formatContext->pb = avio_ctx;
+formatContext->flags |= AVFMT_FLAG_CUSTOM_IO;
+
+ if (avformat_open_input(&formatContext, nullptr, nullptr,
+                          nullptr) < 0) {
+    throw std::runtime_error("could not open stdin stream ");
+  }
+}
+
+void VideoDecoder::setHeader(std::string && headerBuffer) {
+header.data = std::move(headerBuffer);
 }

@@ -197,12 +197,12 @@ std::string Options::renderBraille(const std::vector<RGB> &frame) const {
   return buffer;
 }
 
-std::vector<char> readStdin(void) {
-  return std::vector<char>((std::istreambuf_iterator<char>(std::cin)),
+std::string readStdin(void) {
+  return std::string((std::istreambuf_iterator<char>(std::cin)),
                            std::istreambuf_iterator<char>());
 }
 
-std::vector<char> readFile(const std::string &file) {
+std::string readFile(const std::string &file) {
   std::ifstream f(file, std::ios::binary | std::ios::ate);
 
   if (!f.is_open()) {
@@ -212,7 +212,8 @@ std::vector<char> readFile(const std::string &file) {
   std::streamsize size = f.tellg();
   f.seekg(0, std::ios::beg);
 
-  std::vector<char> data(size);
+  std::string data;
+  data.reserve(size);
 
   if (f.read(data.data(), size)) {
     return data;
@@ -232,4 +233,6 @@ bool isSimilar(const RGB &p1, const RGB &p2, int th) {
 
   return (dr * dr + dg * dg + db * db) < (th * th);
 }
+
+
 } // namespace utils
