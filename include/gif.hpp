@@ -18,6 +18,6 @@ private:
   std::vector<char> readGif(const std::string &path);
 
 public:
-  Gif(std::vector<char>&&buffer, const utils::Options &options);
+  Gif(std::vector<char> &&buffer, const utils::Options &options);
   void renderGif(void) const;
 };

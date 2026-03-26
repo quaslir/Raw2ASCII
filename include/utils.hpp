@@ -13,6 +13,7 @@ struct Options {
   bool readStdin = false;
   int threshold = 0;
   bool fps = false;
+  bool help = false;
   std::string file = "";
   std::string outputPath = "";
   Options() {}
@@ -27,6 +28,6 @@ struct Options {
 std::string calculateBraille(bool dots[2][4]);
 std::vector<char> readStdin(void);
 std::vector<char> readFile(const std::string &file);
-  bool isSimilar(const RGB& p1, const RGB&p2, int th);
+bool isSimilar(const RGB &p1, const RGB &p2, int th);
 
 } // namespace utils

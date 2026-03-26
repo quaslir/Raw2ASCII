@@ -1,10 +1,10 @@
 #include "video.hpp"
 #include <chrono>
 #include <cstring>
+#include <fstream>
 #include <iostream>
 #include <sstream>
 #include <thread>
-#include <fstream>
 VideoDecoder::~VideoDecoder() {
 
   av_packet_free(&packet);
@@ -17,9 +17,9 @@ VideoDecoder::~VideoDecoder() {
   sws_freeContext(swsContext);
 }
 
-VideoDecoder::VideoDecoder(
-                           const utils::Options &options) {
-  if (avformat_open_input(&formatContext, options.file.c_str(), nullptr, nullptr) < 0) {
+VideoDecoder::VideoDecoder(const utils::Options &options) {
+  if (avformat_open_input(&formatContext, options.file.c_str(), nullptr,
+                          nullptr) < 0) {
     throw std::runtime_error("could not open file ");
   }
 
@@ -28,8 +28,8 @@ VideoDecoder::VideoDecoder(
   }
 
   const AVCodec *videoCodec = nullptr;
-  videoStreamIndex =
-      av_find_best_stream(formatContext, AVMEDIA_TYPE_VIDEO, -1, -1, &videoCodec, 0);
+  videoStreamIndex = av_find_best_stream(formatContext, AVMEDIA_TYPE_VIDEO, -1,
+                                         -1, &videoCodec, 0);
 
   if (videoStreamIndex < 0) {
     throw std::runtime_error("video data could not be found");
@@ -45,12 +45,12 @@ VideoDecoder::VideoDecoder(
     throw std::runtime_error("could not open codec");
   }
 
-  audio.getFormatContext = [this]() {
-    return formatContext;
-  };
-  audio.init();
-  opts = options;
+  audio.getFormatContext = [this]() { return formatContext; };
 
+  opts = options;
+  if(opts.outputPath.empty()) {
+  audio.init();
+  }
   packet = av_packet_alloc();
   frame = av_frame_alloc();
   rgbFrame = av_frame_alloc();
@@ -105,8 +105,7 @@ bool VideoDecoder::getNextFrame(void) {
 
       av_packet_unref(packet);
       return true;
-    }
-    else if(packet->stream_index == audio.frameIndex) {
+    } else if (packet->stream_index == audio.frameIndex) {
       audio.decode(packet);
     }
 
@@ -163,10 +162,9 @@ void VideoDecoder::renderVideo(void) {
   });
 
   auto startTime = std::chrono::steady_clock::now();
-  if(opts.outputPath.empty()) {
-  std::cout << "\033[2J\033[?25l";
-  }
-  else {
+  if (opts.outputPath.empty()) {
+    std::cout << "\033[2J\033[?25l";
+  } else {
     opts.writeFile("\033[2J\033[?25l");
   }
 
@@ -200,16 +198,16 @@ void VideoDecoder::renderVideo(void) {
       continue;
     }
 
-    if(opts.outputPath.empty()) {
-    std::fwrite(currentFrame.data.c_str(), 1, currentFrame.data.size(), stdout);
-    std::fwrite("\033[H", 1, 3, stdout);
-    if(opts.fps) {
-      fps.update();
-    std::string fpsStr = fps.display() + "\033[K\n";
-    std::fwrite(fpsStr.data(), 1, fpsStr.size(), stdout);
-    }
-    }
-    else {
+    if (opts.outputPath.empty()) {
+      std::fwrite(currentFrame.data.c_str(), 1, currentFrame.data.size(),
+                  stdout);
+      std::fwrite("\033[H", 1, 3, stdout);
+      if (opts.fps) {
+        fps.update();
+        std::string fpsStr = fps.display() + "\033[K\n";
+        std::fwrite(fpsStr.data(), 1, fpsStr.size(), stdout);
+      }
+    } else {
       opts.writeFile(std::move(currentFrame.data));
       opts.writeFile("\033[H");
     }
@@ -218,13 +216,11 @@ void VideoDecoder::renderVideo(void) {
   if (decoder.joinable())
     decoder.join();
 
-  if(opts.outputPath.empty()) {
-      std::cout << "\033[?25h";
-  }
-  else {
+  if (opts.outputPath.empty()) {
+    std::cout << "\033[?25h";
+  } else {
     opts.writeFile("\033[?25h");
   }
-
 }
 
 void VideoDecoder::fillQueue(void) {
@@ -234,4 +230,3 @@ void VideoDecoder::fillQueue(void) {
     }
   }
 }
-

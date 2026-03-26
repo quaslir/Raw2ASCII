@@ -7,6 +7,7 @@ extern "C" {
 #include <libswscale/swscale.h>
 }
 
+#include "audio.hpp"
 #include "fps.hpp"
 #include "rgb.hpp"
 #include "utils.hpp"
@@ -18,7 +19,6 @@ extern "C" {
 #include <stdint.h>
 #include <string>
 #include <vector>
-#include "audio.hpp"
 struct Frame {
   std::string data;
   double duration;
@@ -47,6 +47,7 @@ private:
   std::string renderStream(RGB *currentFrame) const;
   void fillQueue(void);
   bool getNextFrame(void);
+
 public:
   VideoDecoder(const utils::Options &options);
 

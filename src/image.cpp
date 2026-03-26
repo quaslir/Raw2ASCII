@@ -9,32 +9,32 @@
 #include <string>
 #include <sys/ioctl.h>
 #include <unistd.h>
-Image::Image(const utils::Options &options)
+Image::Image(const utils::Options &options) : data(nullptr, stbi_image_free) {
+
+  unsigned char *raw =
+      stbi_load(options.file.c_str(), &width, &height, &channels, 4);
+  try {
+    processRaw(raw);
+    opts = options;
+
+  } catch (const std::exception &err) {
+    std::cerr << err.what() << '\n';
+  }
+}
+
+Image::Image(const utils::Options &options, const std::vector<char> &buffer)
     : data(nullptr, stbi_image_free) {
+  unsigned char *raw = stbi_load_from_memory(
+      reinterpret_cast<const stbi_uc *>(buffer.data()),
+      static_cast<int>(buffer.size()), &width, &height, &channels, 4);
+  try {
+    processRaw(raw);
+    opts = options;
 
-
-      unsigned char * raw = stbi_load(options.file.c_str(), &width, &height, &channels, 4);
-      try {
-processRaw(raw);
-opts = options;
-
-} catch(const std::exception &err) {
-  std::cerr << err.what() << '\n';
+  } catch (const std::exception &err) {
+    std::cerr << err.what() << '\n';
+  }
 }
-}
-
-Image::Image(const utils::Options &options, const std::vector<char> & buffer): data(nullptr, stbi_image_free) {
-unsigned char * raw = stbi_load_from_memory(reinterpret_cast<const stbi_uc*> (buffer.data()),static_cast<int>(buffer.size()), &width, &height, &channels, 4);
-try {
-processRaw(raw);
-opts = options;
-
-} catch(const std::exception &err) {
-  std::cerr << err.what() << '\n';
-}
-
-}
-
 
 void Image::processRaw(unsigned char *raw) {
   if (!raw) {
@@ -43,8 +43,6 @@ void Image::processRaw(unsigned char *raw) {
 
   data.reset(reinterpret_cast<RGB *>(raw));
 }
-
-
 
 void Image::renderImage(void) const {
   if (!data)
@@ -69,7 +67,7 @@ void Image::renderImage(void) const {
         const RGB &top = data[y * width + x];
         int bottomIdx = (y + stepY < height) ? (y + stepY) : y;
         const RGB &bottom = data[(bottomIdx)*width + x];
-        top.printPixel(buffer, bottom, prevTop, prevBottom);
+        top.printPixel(buffer, bottom, prevTop, prevBottom, opts.threshold);
       }
       buffer += "\x1b[0m\n";
     }

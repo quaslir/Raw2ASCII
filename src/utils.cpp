@@ -1,45 +1,50 @@
 #include "utils.hpp"
 #include <exception>
+#include <fstream>
 #include <iostream>
 #include <sys/ioctl.h>
 #include <unistd.h>
-#include <fstream>
 namespace utils {
 
 Options::Options(int argc, char *argv[]) {
   setFullScreen();
-   parse(argc, argv);
-   }
+  parse(argc, argv);
+}
 void Options::parse(int argc, char *argv[]) {
 
   if (argc < 2) {
     readStdin = true;
     return;
   }
-    
+
   for (int i = 1; i < argc; i++) {
     std::string_view param(argv[i]);
 
+    if (param.starts_with("--help")) {
+      help = true;
+      return;
+    }
+
     if ((param.starts_with("-w")) || (param.starts_with("--width="))) {
       size_t index = param.starts_with("-w") ? std::string{"-w"}.length()
-                                             : std::string{"--width="}.length();
+                                             : std::string{"--width"}.length();
       try {
         int w = std::stoi(std::string{param.substr(index)});
         targetWidth = w;
-      } catch (const std::exception &err) {
-        std::cerr << err.what() << std::endl;
+      } catch (...) {
+        throw std::invalid_argument("invalid value");
       }
     }
 
-    else if ((param.starts_with("-h")) || (param.starts_with("--height"))) {
+    else if ((param.starts_with("-h")) || (param.starts_with("--height="))) {
       size_t index = param.starts_with("-h")
                          ? std::string{"-h"}.length()
                          : std::string{"--height="}.length();
       try {
         int h = std::stoi(std::string{param.substr(index)});
         targetHeight = h;
-      } catch (const std::exception &err) {
-        std::cerr << err.what() << std::endl;
+      } catch (...) {
+        throw std::invalid_argument("invalid value");
       }
     }
 
@@ -56,25 +61,25 @@ void Options::parse(int argc, char *argv[]) {
 
     else if (param == "--braille" || param == "-b") {
       braille = true;
-    }
-    else if(param.starts_with("-t") || param.starts_with("--threshold")) {
-      size_t index = param.starts_with("-t") ? std::string{"-t"}.length() : std::string{"--threshold"}.length();
+    } else if (param.starts_with("-t") || param.starts_with("--threshold=")) {
+      size_t index = param.starts_with("-t")
+                         ? std::string{"-t"}.length()
+                         : std::string{"--threshold="}.length();
       try {
         int th = std::stoi(std::string{param.substr(index)});
         threshold = th;
-      } catch (const std::exception &err) {
-        std::cerr << err.what() << std::endl;
+      } catch (...) {
+        throw std::invalid_argument("invalid value");
       }
-    }
-    else {
-      if(param == "-") {
+    } else {
+      if (param == "-") {
         readStdin = true;
       } else
-      file = param;
+        file = param;
     }
   }
 
-  if(file.empty()) {
+  if (file.empty()) {
     readStdin = true;
   }
 }
@@ -172,11 +177,11 @@ std::string Options::renderBraille(const std::vector<RGB> &frame) const {
       }
       if (bright != prevbright) {
         buffer +=
-            "\033[38;2;" + bright.r + ';' + bright.g + ';' + bright.b + 'm';
+            "\033[38;2;" + std::to_string(bright.r) + ';' + std::to_string(bright.g) + ';' + std::to_string(bright.b) + 'm';
       }
 
       if (dark != prevdark) {
-        buffer += "\033[48;2;" + dark.r + ';' + dark.g + ';' + dark.b + 'm';
+        buffer += "\033[48;2;" + std::to_string(dark.r) + ';' + std::to_string(dark.g) + ';' + std::to_string(dark.b)+ 'm';
       }
 
       buffer += utils::calculateBraille(dots);
@@ -194,35 +199,34 @@ std::string Options::renderBraille(const std::vector<RGB> &frame) const {
 
 std::vector<char> readStdin(void) {
   return std::vector<char>((std::istreambuf_iterator<char>(std::cin)),
-  std::istreambuf_iterator<char>());
+                           std::istreambuf_iterator<char>());
 }
 
 std::vector<char> readFile(const std::string &file) {
   std::ifstream f(file, std::ios::binary | std::ios::ate);
 
-  if(!f.is_open()) {
+  if (!f.is_open()) {
     throw std::invalid_argument("could not read file");
   }
 
   std::streamsize size = f.tellg();
   f.seekg(0, std::ios::beg);
 
-  std::vector<char> data (size);
+  std::vector<char> data(size);
 
-  if(f.read(data.data(), size)) {
+  if (f.read(data.data(), size)) {
     return data;
   }
-return {};
-
-} 
+  return {};
+}
 
 void Options::writeFile(std::string &&buffer) const {
   std::ofstream file(outputPath, std::ios::app);
   file << buffer;
 }
 
-bool isSimilar(const RGB& p1, const RGB&p2, int th) {
-    int dr = p1.r - p2.r;
+bool isSimilar(const RGB &p1, const RGB &p2, int th) {
+  int dr = p1.r - p2.r;
   int dg = p1.g - p2.g;
   int db = p1.b - p2.b;
 

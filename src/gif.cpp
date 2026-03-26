@@ -27,14 +27,13 @@ std::vector<char> Gif::readGif(const std::string &path) {
   return buffer;
 }
 
-Gif::Gif(std::vector<char>&&buffer, const utils::Options &options) {
+Gif::Gif(std::vector<char> &&buffer, const utils::Options &options) {
   int w, h, count, channels;
   int *delays = nullptr;
 
-
-  unsigned char *raw =
-      stbi_load_gif_from_memory(reinterpret_cast<const stbi_uc*>(buffer.data()), static_cast<int>(buffer.size()),
-                                &delays, &w, &h, &count, &channels, 4);
+  unsigned char *raw = stbi_load_gif_from_memory(
+      reinterpret_cast<const stbi_uc *>(buffer.data()),
+      static_cast<int>(buffer.size()), &delays, &w, &h, &count, &channels, 4);
 
   if (!raw) {
     throw std::runtime_error("Failed to load GIF");
@@ -69,8 +68,11 @@ void Gif::renderGif(void) const {
   std::cout << "\033[2J\033[?25l";
 
   for (size_t i = 0; i < data.size(); i++) {
-    std::string buffer ="\033[H";
-
+    std::string buffer = "\033[H";
+    if(opts.braille) {
+      buffer += opts.renderBraille(data[i].frame);
+    }
+    else {
     for (int y = 0; y < height; y += stepY * 2) {
       RGB prevTop(0, 0, 0);
       RGB prevBottom(0, 0, 0);
@@ -82,15 +84,15 @@ void Gif::renderGif(void) const {
         int bottomIdx = (y + stepY < height) ? (y + stepY) : y;
         const RGB &bottom = data[i].frame[(bottomIdx)*width + x];
 
-        top.printPixel(buffer, bottom, prevTop, prevBottom);
+        top.printPixel(buffer, bottom, prevTop, prevBottom, opts.threshold);
       }
       buffer += "\033[0m\n";
     }
+  }
+    if (opts.outputPath.empty()) {
 
-    if(opts.outputPath.empty()) {
-
-    std::cout << buffer.c_str();
-    std::this_thread::sleep_for(std::chrono::milliseconds(data[i].delay));
+      std::cout << buffer.c_str();
+      std::this_thread::sleep_for(std::chrono::milliseconds(data[i].delay));
     } else {
       opts.writeFile(std::move(buffer));
     }
@@ -98,4 +100,3 @@ void Gif::renderGif(void) const {
 
   std::cout << "\033[?25h" << std::endl;
 }
-
