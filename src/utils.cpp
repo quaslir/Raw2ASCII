@@ -82,6 +82,10 @@ void Options::parse(int argc,char *argv[]) {
   if (file.empty()) {
     readStdin = true;
   }
+
+  if(targetWidth * targetHeight > 1000 * 1000) {
+    throw std::invalid_argument("Resolution too high! Terminal limit is 1MPix.");
+  }
 }
 
 void Options::setFullScreen(void) {
@@ -155,7 +159,7 @@ std::string Options::renderBraille(const std::vector<RGB> &frame) const {
 
       int contrast = maxLum - minLum;
       int threshold = (minLum + maxLum) / 2;
-      bool dots[2][4] = {0};
+      bool dots[2][4];
       if (contrast > 25) {
         for (int dy = 0; dy < 4; dy++) {
           for (int dx = 0; dx < 2; dx++) {
@@ -234,5 +238,9 @@ bool isSimilar(const RGB &p1, const RGB &p2, int th) {
   return (dr * dr + dg * dg + db * db) < (th * th);
 }
 
-
+void restoreTerminal(int signum) {
+  std::cout << "\033[?25h\033[0m";
+  
+  exit(signum);
+}
 } // namespace utils

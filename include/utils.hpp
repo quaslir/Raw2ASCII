@@ -29,6 +29,6 @@ std::string calculateBraille(bool dots[2][4]);
 std::string readStdin(void);
 std::string readFile(const std::string &file);
 bool isSimilar(const RGB &p1, const RGB &p2, int th);
-
+void restoreTerminal(int signum);
 
 } // namespace utils

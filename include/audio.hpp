@@ -25,13 +25,13 @@ struct AudioPlayer {
   void processAudioFrame(AVFrame *frame);
   void decode(AVPacket *packet);
   void pushData(const int16_t *data, ma_uint32 count);
-  ma_device dev;
-  ma_pcm_rb rb;
+  ma_device dev = {};
+  ma_pcm_rb rb = {};
   SwrContext *swrContext = nullptr;
   AVCodecContext *codecContext = nullptr;
   int frameIndex = -1;
   AVFrame *audioFrame = nullptr;
-  AVChannelLayout layout;
+  AVChannelLayout layout = {};
     std::vector<uint8_t> buffer;
   std::function<AVFormatContext *(void)> getFormatContext;
 };

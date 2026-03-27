@@ -18,5 +18,5 @@ private:
   bool isGif(std::ifstream &file);
   bool isGif(const std::vector<char> &file);
   bool isImg(const std::string &file);
-  bool isImg(const std::vector<char> &data);
+  bool isImg(const std::string &data, bool flag);
 } // namespace ext

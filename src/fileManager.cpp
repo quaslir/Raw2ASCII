@@ -26,7 +26,7 @@ FileManager::FileManager(utils::Options &&options) {
 
 void FileManager::processFromFile(void) const {
   std::ifstream file(opts.file, std::ios::binary | std::ios::ate);
-
+    try {
   if (isGif(file)) {
     std::string data = utils::readFile(opts.file);
     handleGif(std::move(data));
@@ -34,24 +34,34 @@ void FileManager::processFromFile(void) const {
     Image img(opts);
     img.renderImage();
   } else {
+
     VideoDecoder video{opts};
     video.open();
     video.renderVideo();
+    
   }
+  } catch(const std::exception &err) {
+      std::cerr << err.what() << std::endl;
+    }
 }
 
 void FileManager::processFromStdin(void) const {
   std::string header;
-  header.reserve(4096);
-  size_t bytesRead = std::fread(header.data(), 1, 4096, stdin);
+  constexpr std::size_t chunk = 1024 * 1024;
+  header.resize(chunk);
+  size_t bytesRead = std::fread(header.data(), 1, chunk, stdin);
+  if(bytesRead == 0) return;
+  header.resize(bytesRead);
   std::vector<char> windowGif(header.data(), header.data() + 6);
-
+  try {
   if (isGif(windowGif)) {
-    std::string data = header + utils::readStdin();
-    handleGif(std::move(data));
-  } else if (isImg(header)) {
-   std::string data = header + utils::readStdin();
-    Image img(opts, std::move(data));
+    std::string data = utils::readStdin();
+   header.append(data);
+    handleGif(std::move(header));
+  } else if (isImg(header, 1)) {
+   std::string data = utils::readStdin();
+   header.append(data);
+    Image img(opts, std::move(header));
     img.renderImage();
   }
 
@@ -61,6 +71,9 @@ void FileManager::processFromStdin(void) const {
     video.open();
     video.renderVideo();
   }
+} catch(const std::exception &err) {
+  std::cerr << err.what() << std::endl;
+}
 }
 
 bool isGif(std::ifstream &file) {
@@ -90,13 +103,12 @@ void FileManager::handleGif(std::string &&data) const {
   gif.renderGif();
 }
 
-bool isImg(const std::vector<char> &data) {
+bool isImg(const std::string &data, bool flag) {
   if(data.empty()) return false;
   int w, h, ch;
 
   int result = stbi_info_from_memory(
       reinterpret_cast<const stbi_uc *>(data.data()), data.size(), &w, &h, &ch);
-
   return result == 1;
 }
 

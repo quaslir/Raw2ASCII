@@ -54,11 +54,27 @@ void AudioPlayer::init() {
 }
 
 AudioPlayer::~AudioPlayer() {
-  swr_free(&swrContext);
-  avcodec_free_context(&codecContext);
+  if(ma_device_get_state(&dev) != ma_device_state_uninitialized) {
+    if(ma_device_get_state(&dev) == ma_device_state_started) {
+          ma_device_stop(&dev);
+    }
+
   ma_device_uninit(&dev);
   ma_pcm_rb_uninit(&rb);
-  av_frame_free(&audioFrame);
+
+  }
+  if(swrContext) {
+      swr_free(&swrContext);
+      swrContext = nullptr;
+  }
+
+  if(audioFrame) {
+     av_frame_free(&audioFrame);
+  }
+
+  if(codecContext) {
+    avcodec_free_context(&codecContext);
+  }
 }
 
 void AudioPlayer::dataCallback(ma_device *pDev, void *output, const void *input,

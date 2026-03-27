@@ -5,8 +5,9 @@
 #include <exception>
 #include <iostream>
 #include <string>
+#include <csignal>
 int main(int argc, char *argv[]) {
-
+  std::signal(SIGINT, utils::restoreTerminal);
   auto help = R"(Usage: raw2ascii [options] [file]
 
 A utility to convert raw video/image data into ASCII or Braille art.
@@ -34,6 +35,7 @@ Options:
     ext::FileManager manager(std::move(opts));
   } catch (const std::exception &err) {
     std::cerr << err.what() << '\n';
+    utils::restoreTerminal(0);
   }
   return 0;
 }

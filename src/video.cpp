@@ -11,14 +11,26 @@ VideoDecoder::~VideoDecoder() {
   av_frame_free(&frame);
   av_frame_free(&rgbFrame);
   avcodec_free_context(&codecContext);
+  if(formatContext) {
+    if(opts.readStdin && formatContext->pb) {
+      if(formatContext->pb->buffer) {
+       av_freep(&formatContext->pb->buffer);
+      }
+              avio_context_free(&formatContext->pb);
+    }
 
-  if(opts.readStdin) {
-    av_freep(&formatContext->pb->buffer);
-    avio_context_free(&formatContext->pb);
+        avformat_close_input(&formatContext);
   }
-  avformat_close_input(&formatContext);
+
+  if(buffer) {
   av_free(buffer);
-  sws_freeContext(swsContext);
+  buffer = nullptr;
+  }
+  if(swsContext) {
+    sws_freeContext(swsContext);
+    swsContext = nullptr;
+  }
+  
 }
 
 void VideoDecoder::open(void) {
@@ -156,8 +168,7 @@ std::string VideoDecoder::renderStream(const RGB *currentFrame) const {
     for (int x = 0; x < opts.targetWidth; x++) {
 
       const RGB &top = currentFrame[y * opts.targetWidth + x];
-      int bottomIdx = (y + 1 < opts.targetHeight) ? (y + 1) : y;
-      const RGB &bottom = currentFrame[(bottomIdx)*opts.targetWidth + x];
+      const RGB &bottom = y + 1 < opts.targetHeight ? currentFrame[(y+1)*opts.targetWidth + x] : RGB();
 
       top.printPixel(currentFrameBuffer, bottom, prevTop, prevBottom, opts.threshold);
     }
