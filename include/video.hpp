@@ -7,6 +7,7 @@ extern "C" {
 #include <libswscale/swscale.h>
 }
 
+#include "audio.hpp"
 #include "fps.hpp"
 #include "rgb.hpp"
 #include "utils.hpp"
@@ -18,13 +19,18 @@ extern "C" {
 #include <stdint.h>
 #include <string>
 #include <vector>
-#include "audio.hpp"
+#include <functional>
 struct Frame {
   std::string data;
   double duration;
 
   Frame(std::string &&s, double dur) : data(std::move(s)), duration(dur) {}
   Frame() = default;
+};
+
+struct Header{
+  std::string data;
+  size_t offset = 0;
 };
 
 class VideoDecoder {
@@ -43,14 +49,20 @@ private:
   FPS fps;
   std::queue<Frame> readyData;
   AudioPlayer audio;
+  Header header;
+
   std::unique_ptr<RGB[]> getReadyFrame(void);
-  std::string renderStream(RGB *currentFrame) const;
+
+  std::string renderStream(const RGB *currentFrame) const;
   void fillQueue(void);
   bool getNextFrame(void);
+  void loadFromStdin(void);
 
 public:
-  VideoDecoder(const utils::Options &options);
-
+  void open(void);
+  void setHeader(std::string && headerBuffer);
+  explicit VideoDecoder(const utils::Options &options);
+  static int read_packet(void *opaque, uint8_t *buf, int buf_size);
   void renderVideo(void);
   ~VideoDecoder();
 };

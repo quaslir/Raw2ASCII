@@ -1,70 +1,82 @@
 #include "fileManager.hpp"
 #include "gif.hpp"
 #include "image.hpp"
+#include "stb_image.h"
 #include "utils.hpp"
 #include "video.hpp"
-#include "stb_image.h"
+#include <array>
+#include <exception>
+#include <fstream>
 #include <iostream>
 #include <stdexcept>
 #include <string>
-#include <fstream>
 #include <string_view>
-#include <array>
-#include <exception>
 #define GIF_SIGNATURE 6
 namespace ext {
-FileManager::FileManager(utils::Options && options) {
-    opts = options;
-    if(opts.readStdin) {
-      processFromStdin();
-    }
+FileManager::FileManager(utils::Options &&options) {
+  opts = options;
+  if (opts.readStdin) {
+    processFromStdin();
+  }
 
-    else {
-      processFromFile();
-    }
+  else {
+    processFromFile();
+  }
 }
-
 
 void FileManager::processFromFile(void) const {
   std::ifstream file(opts.file, std::ios::binary | std::ios::ate);
+    try {
+  if (isGif(file)) {
+    std::string data = utils::readFile(opts.file);
+    handleGif(std::move(data));
+  } else if (isImg(opts.file)) {
+    Image img(opts);
+    img.renderImage();
+  } else {
 
-
-if(isGif(file)) {
-  std::vector<char>data = utils::readFile(opts.file);
-  handleGif(std::move(data));
-} else if(isImg(opts.file)) {
-  Image img(opts);
-  img.renderImage();
-}
-else {
-  VideoDecoder video(opts);
-  video.renderVideo();
-}
+    VideoDecoder video{opts};
+    video.open();
+    video.renderVideo();
+    
+  }
+  } catch(const std::exception &err) {
+      std::cerr << err.what() << std::endl;
+    }
 }
 
 void FileManager::processFromStdin(void) const {
-  std::vector<char> data = utils::readStdin();
+  std::string header;
+  constexpr std::size_t chunk = 1024 * 1024;
+  header.resize(chunk);
+  size_t bytesRead = std::fread(header.data(), 1, chunk, stdin);
+  if(bytesRead == 0) return;
+  header.resize(bytesRead);
+  std::vector<char> windowGif(header.data(), header.data() + 6);
+  try {
+  if (isGif(windowGif)) {
+    std::string data = utils::readStdin();
+   header.append(data);
+    handleGif(std::move(header));
+  } else if (isImg(header, 1)) {
+   std::string data = utils::readStdin();
+   header.append(data);
+    Image img(opts, std::move(header));
+    img.renderImage();
+  }
 
-  std::vector<char> windowGif(data.begin(), data.begin() + 6);
-  
-if(isGif(windowGif)) {
-handleGif(std::move(data));
+  else {
+    VideoDecoder video{opts};
+    video.setHeader(std::move(header));
+    video.open();
+    video.renderVideo();
+  }
+} catch(const std::exception &err) {
+  std::cerr << err.what() << std::endl;
 }
-else if(isImg(data)){
-  Image img(opts, data);
-  img.renderImage();
 }
 
-else {
-  VideoDecoder video(opts);
-  video.renderVideo();
-}
-    
-}
-
-
-bool FileManager::isGif(std::ifstream &file)const {
-
+bool isGif(std::ifstream &file) {
   file.seekg(0);
   std::array<char, GIF_SIGNATURE> signature;
 
@@ -74,11 +86,11 @@ bool FileManager::isGif(std::ifstream &file)const {
   return view == "GIF87a" || view == "GIF89a";
 }
 
-bool FileManager::isGif(const std::vector<char> &file)const {
-
+bool isGif(const std::vector<char> &file) {
+  if(file.empty()) return false;
   std::array<char, GIF_SIGNATURE> signature;
 
-  for(int i = 0; i < 6;i++) {
+  for (int i = 0; i < 6; i++) {
     signature[i] = file[i];
   }
 
@@ -86,21 +98,22 @@ bool FileManager::isGif(const std::vector<char> &file)const {
   return view == "GIF87a" || view == "GIF89a";
 }
 
-void FileManager::handleGif(std::vector<char>&&data) const {
-
-Gif gif(std::move(data), opts);
-gif.renderGif();
+void FileManager::handleGif(std::string &&data) const {
+  Gif gif(std::move(data), opts);
+  gif.renderGif();
 }
 
-bool FileManager::isImg(const std::vector<char> &data) const {
-int w, h, ch;
+bool isImg(const std::string &data, bool flag) {
+  if(data.empty()) return false;
+  int w, h, ch;
 
-int result = stbi_info_from_memory(reinterpret_cast<const stbi_uc*>(data.data()), data.size(), &w, &h, &ch);
-
-return result == 1;
+  int result = stbi_info_from_memory(
+      reinterpret_cast<const stbi_uc *>(data.data()), data.size(), &w, &h, &ch);
+  return result == 1;
 }
 
-bool FileManager::isImg(const std::string &file) const {
+bool isImg(const std::string &file) {
+  if(file.empty()) return false;
   int w, h, ch;
   return stbi_info(file.c_str(), &w, &h, &ch);
 }

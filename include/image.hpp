@@ -14,8 +14,9 @@ private:
 
   void saveToFile(std::stringstream &ss) const;
   void processRaw(unsigned char *raw);
+
 public:
-  Image(const utils::Options &options);
-  Image(const utils::Options &options, const std::vector<char> & buffer);
+  explicit Image(const utils::Options &options);
+  Image(const utils::Options &options, std::string &&buffer);
   void renderImage(void) const;
 };

@@ -8,33 +8,14 @@
 #include <string>
 #include <thread>
 #include <vector>
-std::vector<char> Gif::readGif(const std::string &path) {
-  std::ifstream file(path, std::ios::binary | std::ios::ate);
 
-  if (!file.is_open()) {
-    throw std::runtime_error("file " + path + " could not be found");
-  }
-
-  std::streamsize size = file.tellg();
-  file.seekg(0, std::ios::beg);
-
-  std::vector<char> buffer;
-  buffer.resize(size);
-
-  if (!file.read(reinterpret_cast<char *>(buffer.data()), size)) {
-    throw std::runtime_error("could not read file " + path);
-  }
-  return buffer;
-}
-
-Gif::Gif(std::vector<char>&&buffer, const utils::Options &options) {
+Gif::Gif(std::string &&buffer, const utils::Options &options) {
   int w, h, count, channels;
   int *delays = nullptr;
 
-
-  unsigned char *raw =
-      stbi_load_gif_from_memory(reinterpret_cast<const stbi_uc*>(buffer.data()), static_cast<int>(buffer.size()),
-                                &delays, &w, &h, &count, &channels, 4);
+  unsigned char *raw = stbi_load_gif_from_memory(
+      reinterpret_cast<const stbi_uc *>(buffer.data()),
+      static_cast<int>(buffer.size()), &delays, &w, &h, &count, &channels, 4);
 
   if (!raw) {
     throw std::runtime_error("Failed to load GIF");
@@ -48,7 +29,7 @@ Gif::Gif(std::vector<char>&&buffer, const utils::Options &options) {
   data.resize(count);
 
   for (int i = 0; i < count; i++) {
-    unsigned char *framePtr = raw + (i * frameSize);
+    const unsigned char *framePtr = raw + (i * frameSize);
 
     data[i].delay = delays[i];
     data[i].frame.resize(width * height);
@@ -69,25 +50,34 @@ void Gif::renderGif(void) const {
   std::cout << "\033[2J\033[?25l";
 
   for (size_t i = 0; i < data.size(); i++) {
-    std::cout << "\033[H";
-    std::string buffer;
-
+    std::string buffer = "\033[H";
+    if(opts.braille) {
+      buffer += opts.renderBraille(data[i].frame);
+    }
+    else {
     for (int y = 0; y < height; y += stepY * 2) {
       RGB prevTop(0, 0, 0);
       RGB prevBottom(0, 0, 0);
+      prevTop.alpha = 0;
+      prevBottom.alpha = 0;
       for (int x = 0; x < width; x += stepX) {
 
         const RGB &top = data[i].frame[y * width + x];
         int bottomIdx = (y + stepY < height) ? (y + stepY) : y;
         const RGB &bottom = data[i].frame[(bottomIdx)*width + x];
 
-        top.printPixel(buffer, bottom, prevTop, prevBottom);
+        top.printPixel(buffer, bottom, prevTop, prevBottom, opts.threshold);
       }
-      buffer += "\x1b[0m\n";
+      buffer += "\033[0m\n";
     }
+  }
+    if (opts.outputPath.empty()) {
 
-    std::cout << buffer.c_str();
-    std::this_thread::sleep_for(std::chrono::milliseconds(data[i].delay));
+      std::cout << buffer;
+      std::this_thread::sleep_for(std::chrono::milliseconds(data[i].delay));
+    } else {
+      opts.writeFile(std::move(buffer));
+    }
   }
 
   std::cout << "\033[?25h" << std::endl;

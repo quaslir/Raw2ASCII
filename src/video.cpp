@@ -1,6 +1,7 @@
 #include "video.hpp"
 #include <chrono>
 #include <cstring>
+#include <fstream>
 #include <iostream>
 #include <sstream>
 #include <thread>
@@ -10,25 +11,45 @@ VideoDecoder::~VideoDecoder() {
   av_frame_free(&frame);
   av_frame_free(&rgbFrame);
   avcodec_free_context(&codecContext);
+  if(formatContext) {
+    if(opts.readStdin && formatContext->pb) {
+      if(formatContext->pb->buffer) {
+       av_freep(&formatContext->pb->buffer);
+      }
+              avio_context_free(&formatContext->pb);
+    }
 
-  avformat_close_input(&formatContext);
+        avformat_close_input(&formatContext);
+  }
+
+  if(buffer) {
   av_free(buffer);
-  sws_freeContext(swsContext);
+  buffer = nullptr;
+  }
+  if(swsContext) {
+    sws_freeContext(swsContext);
+    swsContext = nullptr;
+  }
+  
 }
 
-VideoDecoder::VideoDecoder(
-                           const utils::Options &options) {
-  if (avformat_open_input(&formatContext, options.file.c_str(), nullptr, nullptr) < 0) {
+void VideoDecoder::open(void) {
+if(!opts.readStdin) {
+  if (avformat_open_input(&formatContext, opts.file.c_str(), nullptr,
+                          nullptr) < 0) {
     throw std::runtime_error("could not open file ");
   }
+} else {
+  loadFromStdin();
+}
 
   if (avformat_find_stream_info(formatContext, nullptr) < 0) {
     throw std::runtime_error("could not find stream data");
   }
 
   const AVCodec *videoCodec = nullptr;
-  videoStreamIndex =
-      av_find_best_stream(formatContext, AVMEDIA_TYPE_VIDEO, -1, -1, &videoCodec, 0);
+  videoStreamIndex = av_find_best_stream(formatContext, AVMEDIA_TYPE_VIDEO, -1,
+                                         -1, &videoCodec, 0);
 
   if (videoStreamIndex < 0) {
     throw std::runtime_error("video data could not be found");
@@ -44,12 +65,11 @@ VideoDecoder::VideoDecoder(
     throw std::runtime_error("could not open codec");
   }
 
-  audio.getFormatContext = [this]() {
-    return formatContext;
-  };
-  audio.init();
-  opts = options;
+  audio.getFormatContext = [this]() { return formatContext; };
 
+  if(opts.outputPath.empty()) {
+  audio.init();
+  }
   packet = av_packet_alloc();
   frame = av_frame_alloc();
   rgbFrame = av_frame_alloc();
@@ -63,6 +83,10 @@ VideoDecoder::VideoDecoder(
   buffer = static_cast<uint8_t *>(av_malloc(bytes));
   av_image_fill_arrays(rgbFrame->data, rgbFrame->linesize, buffer,
                        AV_PIX_FMT_RGBA, opts.targetWidth, opts.targetHeight, 1);
+}
+
+VideoDecoder::VideoDecoder(const utils::Options &options) : opts(options) {
+  formatContext = avformat_alloc_context();
 }
 
 bool VideoDecoder::getNextFrame(void) {
@@ -104,8 +128,7 @@ bool VideoDecoder::getNextFrame(void) {
 
       av_packet_unref(packet);
       return true;
-    }
-    else if(packet->stream_index == audio.frameIndex) {
+    } else if (packet->stream_index == audio.frameIndex) {
       audio.decode(packet);
     }
 
@@ -133,10 +156,11 @@ std::unique_ptr<RGB[]> VideoDecoder::getReadyFrame(void) {
   return data;
 }
 
-std::string VideoDecoder::renderStream(RGB *currentFrame) const {
-
-  std::string buffer;
-  buffer.reserve(opts.targetHeight * opts.targetWidth * 20);
+std::string VideoDecoder::renderStream(const RGB *currentFrame) const {
+  if(!currentFrame) return "";
+  
+  std::string currentFrameBuffer;
+  currentFrameBuffer.reserve(opts.targetHeight * opts.targetWidth * 20);
 
   for (int y = 0; y < opts.targetHeight; y += 2) {
     RGB prevBottom;
@@ -144,15 +168,14 @@ std::string VideoDecoder::renderStream(RGB *currentFrame) const {
     for (int x = 0; x < opts.targetWidth; x++) {
 
       const RGB &top = currentFrame[y * opts.targetWidth + x];
-      int bottomIdx = (y + 1 < opts.targetHeight) ? (y + 1) : y;
-      const RGB &bottom = currentFrame[(bottomIdx)*opts.targetWidth + x];
+      const RGB &bottom = y + 1 < opts.targetHeight ? currentFrame[(y+1)*opts.targetWidth + x] : RGB();
 
-      top.printPixel(buffer, bottom, prevTop, prevBottom);
+      top.printPixel(currentFrameBuffer, bottom, prevTop, prevBottom, opts.threshold);
     }
-    buffer += "\033[0m\n";
+    currentFrameBuffer += "\033[0m\n";
   }
 
-  return buffer;
+  return currentFrameBuffer;
 }
 
 void VideoDecoder::renderVideo(void) {
@@ -162,7 +185,11 @@ void VideoDecoder::renderVideo(void) {
   });
 
   auto startTime = std::chrono::steady_clock::now();
-  std::cout << "\033[2J\033[?25l";
+  if (opts.outputPath.empty()) {
+    std::cout << "\033[2J\033[?25l";
+  } else {
+    opts.writeFile("\033[2J\033[?25l");
+  }
 
   while (true) {
 
@@ -194,16 +221,30 @@ void VideoDecoder::renderVideo(void) {
       continue;
     }
 
-    fps.update();
-    std::fwrite(currentFrame.data.c_str(), 1, currentFrame.data.size(), stdout);
-    std::fwrite("\033[H", 1, 3, stdout);
-    std::string fpsStr = fps.display() + "\033[K\n";
-    std::fwrite(fpsStr.data(), 1, fpsStr.size(), stdout);
+    if (opts.outputPath.empty()) {
+      std::fwrite(currentFrame.data.c_str(), 1, currentFrame.data.size(),
+                  stdout);
+      std::fwrite("\033[H", 1, 3, stdout);
+      std::fflush(stdout);
+      if (opts.fps) {
+        fps.update();
+        std::string fpsStr = fps.display() + "\033[K\n";
+        std::fwrite(fpsStr.data(), 1, fpsStr.size(), stdout);
+      }
+    } else {
+      opts.writeFile(std::move(currentFrame.data));
+      opts.writeFile("\033[H");
+    }
   }
 
   if (decoder.joinable())
     decoder.join();
-  std::cout << "\033[?25h";
+
+  if (opts.outputPath.empty()) {
+    std::cout << "\033[?25h";
+  } else {
+    opts.writeFile("\033[?25h");
+  }
 }
 
 void VideoDecoder::fillQueue(void) {
@@ -212,4 +253,40 @@ void VideoDecoder::fillQueue(void) {
       std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
   }
+}
+
+int VideoDecoder::read_packet(void *opaque, uint8_t *buf, int buf_size) {
+  auto * self = reinterpret_cast<VideoDecoder*>(opaque);
+  if(self->header.offset < self->header.data.size()) {
+    size_t available = self->header.data.size() - self->header.offset;
+    size_t to_copy = std::min(static_cast<size_t> (buf_size), available);
+
+    std::memcpy(buf, self->header.data.data() + self->header.offset, to_copy);
+    self->header.offset += to_copy;
+    return static_cast<int>(to_copy);
+  }
+
+  size_t size = std::fread(buf, 1, buf_size, stdin);
+  if(size == 0) return AVERROR_EOF;
+  return static_cast<int>(size);
+}
+
+void VideoDecoder::loadFromStdin(void) {
+const std::size_t avio_ctx_buffer_size = 4096;
+unsigned char * avio_ctx_buffer = reinterpret_cast<unsigned char *>(av_malloc(avio_ctx_buffer_size));
+
+AVIOContext * avio_ctx = avio_alloc_context(avio_ctx_buffer, avio_ctx_buffer_size, 
+0, this, &read_packet,nullptr, nullptr);
+
+formatContext->pb = avio_ctx;
+formatContext->flags |= AVFMT_FLAG_CUSTOM_IO;
+
+ if (avformat_open_input(&formatContext, nullptr, nullptr,
+                          nullptr) < 0) {
+    throw std::runtime_error("could not open stdin stream ");
+  }
+}
+
+void VideoDecoder::setHeader(std::string && headerBuffer) {
+header.data = std::move(headerBuffer);
 }
