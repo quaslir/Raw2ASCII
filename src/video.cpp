@@ -11,37 +11,36 @@ VideoDecoder::~VideoDecoder() {
   av_frame_free(&frame);
   av_frame_free(&rgbFrame);
   avcodec_free_context(&codecContext);
-  if(formatContext) {
-    if(opts.readStdin && formatContext->pb) {
-      if(formatContext->pb->buffer) {
-       av_freep(&formatContext->pb->buffer);
+  if (formatContext) {
+    if (opts.readStdin && formatContext->pb) {
+      if (formatContext->pb->buffer) {
+        av_freep(&formatContext->pb->buffer);
       }
-              avio_context_free(&formatContext->pb);
+      avio_context_free(&formatContext->pb);
     }
 
-        avformat_close_input(&formatContext);
+    avformat_close_input(&formatContext);
   }
 
-  if(buffer) {
-  av_free(buffer);
-  buffer = nullptr;
+  if (buffer) {
+    av_free(buffer);
+    buffer = nullptr;
   }
-  if(swsContext) {
+  if (swsContext) {
     sws_freeContext(swsContext);
     swsContext = nullptr;
   }
-  
 }
 
 void VideoDecoder::open(void) {
-if(!opts.readStdin) {
-  if (avformat_open_input(&formatContext, opts.file.c_str(), nullptr,
-                          nullptr) < 0) {
-    throw std::runtime_error("could not open file ");
+  if (!opts.readStdin) {
+    if (avformat_open_input(&formatContext, opts.file.c_str(), nullptr,
+                            nullptr) < 0) {
+      throw std::runtime_error("could not open file ");
+    }
+  } else {
+    loadFromStdin();
   }
-} else {
-  loadFromStdin();
-}
 
   if (avformat_find_stream_info(formatContext, nullptr) < 0) {
     throw std::runtime_error("could not find stream data");
@@ -67,8 +66,8 @@ if(!opts.readStdin) {
 
   audio.getFormatContext = [this]() { return formatContext; };
 
-  if(opts.outputPath.empty()) {
-  audio.init();
+  if (opts.outputPath.empty()) {
+    audio.init();
   }
   packet = av_packet_alloc();
   frame = av_frame_alloc();
@@ -157,8 +156,9 @@ std::unique_ptr<RGB[]> VideoDecoder::getReadyFrame(void) {
 }
 
 std::string VideoDecoder::renderStream(const RGB *currentFrame) const {
-  if(!currentFrame) return "";
-  
+  if (!currentFrame)
+    return "";
+
   std::string currentFrameBuffer;
   currentFrameBuffer.reserve(opts.targetHeight * opts.targetWidth * 20);
 
@@ -168,9 +168,12 @@ std::string VideoDecoder::renderStream(const RGB *currentFrame) const {
     for (int x = 0; x < opts.targetWidth; x++) {
 
       const RGB &top = currentFrame[y * opts.targetWidth + x];
-      const RGB &bottom = y + 1 < opts.targetHeight ? currentFrame[(y+1)*opts.targetWidth + x] : RGB();
+      const RGB &bottom = y + 1 < opts.targetHeight
+                              ? currentFrame[(y + 1) * opts.targetWidth + x]
+                              : RGB();
 
-      top.printPixel(currentFrameBuffer, bottom, prevTop, prevBottom, opts.threshold);
+      top.printPixel(currentFrameBuffer, bottom, prevTop, prevBottom,
+                     opts.threshold);
     }
     currentFrameBuffer += "\033[0m\n";
   }
@@ -256,10 +259,10 @@ void VideoDecoder::fillQueue(void) {
 }
 
 int VideoDecoder::read_packet(void *opaque, uint8_t *buf, int buf_size) {
-  auto * self = reinterpret_cast<VideoDecoder*>(opaque);
-  if(self->header.offset < self->header.data.size()) {
+  auto *self = reinterpret_cast<VideoDecoder *>(opaque);
+  if (self->header.offset < self->header.data.size()) {
     size_t available = self->header.data.size() - self->header.offset;
-    size_t to_copy = std::min(static_cast<size_t> (buf_size), available);
+    size_t to_copy = std::min(static_cast<size_t>(buf_size), available);
 
     std::memcpy(buf, self->header.data.data() + self->header.offset, to_copy);
     self->header.offset += to_copy;
@@ -267,26 +270,28 @@ int VideoDecoder::read_packet(void *opaque, uint8_t *buf, int buf_size) {
   }
 
   size_t size = std::fread(buf, 1, buf_size, stdin);
-  if(size == 0) return AVERROR_EOF;
+  if (size == 0)
+    return AVERROR_EOF;
   return static_cast<int>(size);
 }
 
 void VideoDecoder::loadFromStdin(void) {
-const std::size_t avio_ctx_buffer_size = 4096;
-unsigned char * avio_ctx_buffer = reinterpret_cast<unsigned char *>(av_malloc(avio_ctx_buffer_size));
+  const std::size_t avio_ctx_buffer_size = 4096;
+  unsigned char *avio_ctx_buffer =
+      reinterpret_cast<unsigned char *>(av_malloc(avio_ctx_buffer_size));
 
-AVIOContext * avio_ctx = avio_alloc_context(avio_ctx_buffer, avio_ctx_buffer_size, 
-0, this, &read_packet,nullptr, nullptr);
+  AVIOContext *avio_ctx =
+      avio_alloc_context(avio_ctx_buffer, avio_ctx_buffer_size, 0, this,
+                         &read_packet, nullptr, nullptr);
 
-formatContext->pb = avio_ctx;
-formatContext->flags |= AVFMT_FLAG_CUSTOM_IO;
+  formatContext->pb = avio_ctx;
+  formatContext->flags |= AVFMT_FLAG_CUSTOM_IO;
 
- if (avformat_open_input(&formatContext, nullptr, nullptr,
-                          nullptr) < 0) {
+  if (avformat_open_input(&formatContext, nullptr, nullptr, nullptr) < 0) {
     throw std::runtime_error("could not open stdin stream ");
   }
 }
 
-void VideoDecoder::setHeader(std::string && headerBuffer) {
-header.data = std::move(headerBuffer);
+void VideoDecoder::setHeader(std::string &&headerBuffer) {
+  header.data = std::move(headerBuffer);
 }

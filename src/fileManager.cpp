@@ -26,23 +26,22 @@ FileManager::FileManager(utils::Options &&options) {
 
 void FileManager::processFromFile(void) const {
   std::ifstream file(opts.file, std::ios::binary | std::ios::ate);
-    try {
-  if (isGif(file)) {
-    std::string data = utils::readFile(opts.file);
-    handleGif(std::move(data));
-  } else if (isImg(opts.file)) {
-    Image img(opts);
-    img.renderImage();
-  } else {
+  try {
+    if (isGif(file)) {
+      std::string data = utils::readFile(opts.file);
+      handleGif(std::move(data));
+    } else if (isImg(opts.file)) {
+      Image img(opts);
+      img.renderImage();
+    } else {
 
-    VideoDecoder video{opts};
-    video.open();
-    video.renderVideo();
-    
-  }
-  } catch(const std::exception &err) {
-      std::cerr << err.what() << std::endl;
+      VideoDecoder video{opts};
+      video.open();
+      video.renderVideo();
     }
+  } catch (const std::exception &err) {
+    std::cerr << err.what() << std::endl;
+  }
 }
 
 void FileManager::processFromStdin(void) const {
@@ -50,30 +49,31 @@ void FileManager::processFromStdin(void) const {
   constexpr std::size_t chunk = 1024 * 1024;
   header.resize(chunk);
   size_t bytesRead = std::fread(header.data(), 1, chunk, stdin);
-  if(bytesRead == 0) return;
+  if (bytesRead == 0)
+    return;
   header.resize(bytesRead);
   std::vector<char> windowGif(header.data(), header.data() + 6);
   try {
-  if (isGif(windowGif)) {
-    std::string data = utils::readStdin();
-   header.append(data);
-    handleGif(std::move(header));
-  } else if (isImg(header, 1)) {
-   std::string data = utils::readStdin();
-   header.append(data);
-    Image img(opts, std::move(header));
-    img.renderImage();
-  }
+    if (isGif(windowGif)) {
+      std::string data = utils::readStdin();
+      header.append(data);
+      handleGif(std::move(header));
+    } else if (isImg(header, 1)) {
+      std::string data = utils::readStdin();
+      header.append(data);
+      Image img(opts, std::move(header));
+      img.renderImage();
+    }
 
-  else {
-    VideoDecoder video{opts};
-    video.setHeader(std::move(header));
-    video.open();
-    video.renderVideo();
+    else {
+      VideoDecoder video{opts};
+      video.setHeader(std::move(header));
+      video.open();
+      video.renderVideo();
+    }
+  } catch (const std::exception &err) {
+    std::cerr << err.what() << std::endl;
   }
-} catch(const std::exception &err) {
-  std::cerr << err.what() << std::endl;
-}
 }
 
 bool isGif(std::ifstream &file) {
@@ -87,7 +87,8 @@ bool isGif(std::ifstream &file) {
 }
 
 bool isGif(const std::vector<char> &file) {
-  if(file.empty()) return false;
+  if (file.empty())
+    return false;
   std::array<char, GIF_SIGNATURE> signature;
 
   for (int i = 0; i < 6; i++) {
@@ -104,7 +105,8 @@ void FileManager::handleGif(std::string &&data) const {
 }
 
 bool isImg(const std::string &data, bool flag) {
-  if(data.empty()) return false;
+  if (data.empty())
+    return false;
   int w, h, ch;
 
   int result = stbi_info_from_memory(
@@ -113,7 +115,8 @@ bool isImg(const std::string &data, bool flag) {
 }
 
 bool isImg(const std::string &file) {
-  if(file.empty()) return false;
+  if (file.empty())
+    return false;
   int w, h, ch;
   return stbi_info(file.c_str(), &w, &h, &ch);
 }

@@ -75,9 +75,8 @@ void Image::renderImage(void) const {
 
   if (opts.outputPath.empty())
     std::cout << buffer;
-    std::stringstream ss(buffer);
-    saveToFile(ss);
-
+  std::stringstream ss(buffer);
+  saveToFile(ss);
 }
 
 void Image::saveToFile(std::stringstream &ss) const {

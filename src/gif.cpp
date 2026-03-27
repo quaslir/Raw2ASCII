@@ -51,26 +51,25 @@ void Gif::renderGif(void) const {
 
   for (size_t i = 0; i < data.size(); i++) {
     std::string buffer = "\033[H";
-    if(opts.braille) {
+    if (opts.braille) {
       buffer += opts.renderBraille(data[i].frame);
-    }
-    else {
-    for (int y = 0; y < height; y += stepY * 2) {
-      RGB prevTop(0, 0, 0);
-      RGB prevBottom(0, 0, 0);
-      prevTop.alpha = 0;
-      prevBottom.alpha = 0;
-      for (int x = 0; x < width; x += stepX) {
+    } else {
+      for (int y = 0; y < height; y += stepY * 2) {
+        RGB prevTop(0, 0, 0);
+        RGB prevBottom(0, 0, 0);
+        prevTop.alpha = 0;
+        prevBottom.alpha = 0;
+        for (int x = 0; x < width; x += stepX) {
 
-        const RGB &top = data[i].frame[y * width + x];
-        int bottomIdx = (y + stepY < height) ? (y + stepY) : y;
-        const RGB &bottom = data[i].frame[(bottomIdx)*width + x];
+          const RGB &top = data[i].frame[y * width + x];
+          int bottomIdx = (y + stepY < height) ? (y + stepY) : y;
+          const RGB &bottom = data[i].frame[(bottomIdx)*width + x];
 
-        top.printPixel(buffer, bottom, prevTop, prevBottom, opts.threshold);
+          top.printPixel(buffer, bottom, prevTop, prevBottom, opts.threshold);
+        }
+        buffer += "\033[0m\n";
       }
-      buffer += "\033[0m\n";
     }
-  }
     if (opts.outputPath.empty()) {
 
       std::cout << buffer;

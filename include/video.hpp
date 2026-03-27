@@ -12,6 +12,7 @@ extern "C" {
 #include "rgb.hpp"
 #include "utils.hpp"
 #include <condition_variable>
+#include <functional>
 #include <memory>
 #include <mutex>
 #include <queue>
@@ -19,7 +20,6 @@ extern "C" {
 #include <stdint.h>
 #include <string>
 #include <vector>
-#include <functional>
 struct Frame {
   std::string data;
   double duration;
@@ -28,7 +28,7 @@ struct Frame {
   Frame() = default;
 };
 
-struct Header{
+struct Header {
   std::string data;
   size_t offset = 0;
 };
@@ -60,7 +60,7 @@ private:
 
 public:
   void open(void);
-  void setHeader(std::string && headerBuffer);
+  void setHeader(std::string &&headerBuffer);
   explicit VideoDecoder(const utils::Options &options);
   static int read_packet(void *opaque, uint8_t *buf, int buf_size);
   void renderVideo(void);

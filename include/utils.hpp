@@ -17,7 +17,7 @@ struct Options {
   std::string file = "";
   std::string outputPath = "";
   Options() {}
-  Options(int argc,char *argv[]);
+  Options(int argc, char *argv[]);
   void parse(int argc, char *argv[]);
   Options &operator=(const Options &) = default;
   void setFullScreen(void);

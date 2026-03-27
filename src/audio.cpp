@@ -54,25 +54,24 @@ void AudioPlayer::init() {
 }
 
 AudioPlayer::~AudioPlayer() {
-  if(ma_device_get_state(&dev) != ma_device_state_uninitialized) {
-    if(ma_device_get_state(&dev) == ma_device_state_started) {
-          ma_device_stop(&dev);
+  if (ma_device_get_state(&dev) != ma_device_state_uninitialized) {
+    if (ma_device_get_state(&dev) == ma_device_state_started) {
+      ma_device_stop(&dev);
     }
 
-  ma_device_uninit(&dev);
-  ma_pcm_rb_uninit(&rb);
-
+    ma_device_uninit(&dev);
+    ma_pcm_rb_uninit(&rb);
   }
-  if(swrContext) {
-      swr_free(&swrContext);
-      swrContext = nullptr;
-  }
-
-  if(audioFrame) {
-     av_frame_free(&audioFrame);
+  if (swrContext) {
+    swr_free(&swrContext);
+    swrContext = nullptr;
   }
 
-  if(codecContext) {
+  if (audioFrame) {
+    av_frame_free(&audioFrame);
+  }
+
+  if (codecContext) {
     avcodec_free_context(&codecContext);
   }
 }
@@ -87,7 +86,7 @@ void AudioPlayer::dataCallback(ma_device *pDev, void *output, const void *input,
   ma_uint32 framesRead = frames;
 
   void *pBufferIn = nullptr;
-  int16_t *pOut = static_cast<int16_t*>(output);
+  int16_t *pOut = static_cast<int16_t *>(output);
 
   ma_result res = ma_pcm_rb_acquire_read(&pAudio->rb, &framesRead, &pBufferIn);
 
@@ -118,12 +117,11 @@ void AudioPlayer::processAudioFrame(AVFrame *frame) {
                                    frame->nb_samples,
                                48000, frame->sample_rate, AV_ROUND_UP);
 
+  size_t size = samples * 2 * sizeof(int16_t);
 
-size_t size = samples * 2 * sizeof(int16_t);
-
-if(buffer.size() < size) {
-  buffer.resize(size);
-}
+  if (buffer.size() < size) {
+    buffer.resize(size);
+  }
   uint8_t *outputBuffer = buffer.data();
 
   int converted = swr_convert(swrContext, &outputBuffer, samples,
@@ -132,7 +130,6 @@ if(buffer.size() < size) {
   if (converted > 0) {
     pushData(reinterpret_cast<int16_t *>(outputBuffer), converted);
   }
-
 }
 
 void AudioPlayer::decode(AVPacket *packet) {

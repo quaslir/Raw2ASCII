@@ -15,7 +15,6 @@ private:
   int width, height;
   utils::Options opts;
 
-
 public:
   Gif(std::string &&buffer, const utils::Options &options);
   void renderGif(void) const;

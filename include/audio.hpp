@@ -32,6 +32,6 @@ struct AudioPlayer {
   int frameIndex = -1;
   AVFrame *audioFrame = nullptr;
   AVChannelLayout layout = {};
-    std::vector<uint8_t> buffer;
+  std::vector<uint8_t> buffer;
   std::function<AVFormatContext *(void)> getFormatContext;
 };

@@ -6,11 +6,11 @@
 #include <unistd.h>
 namespace utils {
 
-Options::Options(int argc,char *argv[]) {
+Options::Options(int argc, char *argv[]) {
   setFullScreen();
   parse(argc, argv);
 }
-void Options::parse(int argc,char *argv[]) {
+void Options::parse(int argc, char *argv[]) {
 
   if (argc < 2) {
     readStdin = true;
@@ -83,8 +83,9 @@ void Options::parse(int argc,char *argv[]) {
     readStdin = true;
   }
 
-  if(targetWidth * targetHeight > 1000 * 1000) {
-    throw std::invalid_argument("Resolution too high! Terminal limit is 1MPix.");
+  if (targetWidth * targetHeight > 1000 * 1000) {
+    throw std::invalid_argument(
+        "Resolution too high! Terminal limit is 1MPix.");
   }
 }
 
@@ -180,12 +181,14 @@ std::string Options::renderBraille(const std::vector<RGB> &frame) const {
         bright = dark;
       }
       if (bright != prevbright) {
-        buffer +=
-            "\033[38;2;" + std::to_string(bright.r) + ';' + std::to_string(bright.g) + ';' + std::to_string(bright.b) + 'm';
+        buffer += "\033[38;2;" + std::to_string(bright.r) + ';' +
+                  std::to_string(bright.g) + ';' + std::to_string(bright.b) +
+                  'm';
       }
 
       if (dark != prevdark) {
-        buffer += "\033[48;2;" + std::to_string(dark.r) + ';' + std::to_string(dark.g) + ';' + std::to_string(dark.b)+ 'm';
+        buffer += "\033[48;2;" + std::to_string(dark.r) + ';' +
+                  std::to_string(dark.g) + ';' + std::to_string(dark.b) + 'm';
       }
 
       buffer += utils::calculateBraille(dots);
@@ -203,7 +206,7 @@ std::string Options::renderBraille(const std::vector<RGB> &frame) const {
 
 std::string readStdin(void) {
   return std::string((std::istreambuf_iterator<char>(std::cin)),
-                           std::istreambuf_iterator<char>());
+                     std::istreambuf_iterator<char>());
 }
 
 std::string readFile(const std::string &file) {
@@ -240,7 +243,7 @@ bool isSimilar(const RGB &p1, const RGB &p2, int th) {
 
 void restoreTerminal(int signum) {
   std::cout << "\033[?25h\033[0m";
-  
+
   exit(signum);
 }
 } // namespace utils

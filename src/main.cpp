@@ -2,10 +2,10 @@
 #include "gif.hpp"
 #include "image.hpp"
 #include "utils.hpp"
+#include <csignal>
 #include <exception>
 #include <iostream>
 #include <string>
-#include <csignal>
 int main(int argc, char *argv[]) {
   std::signal(SIGINT, utils::restoreTerminal);
   auto help = R"(Usage: raw2ascii [options] [file]
