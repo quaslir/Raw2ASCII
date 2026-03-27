@@ -3,13 +3,24 @@
 ## Overview
 A low-level binary-to-text translator. Focused on deep parsing of media file structures and high-speed, buffer-optimized graphical output directly to the console.
 
+## 🎬 Showcase
+<img width="498" height="533" alt="Screenshot 2026-03-27 at 15 55 13" src="https://github.com/user-attachments/assets/557811d2-378b-4526-a1ad-c9fc38dbd9e3" />
+
+
+
+<video src = "https://github.com/user-attachments/assets/49e06c54-7f3a-4716-be86-4acea979c99d"/>
+
+
+
 ## 📋 Table of Contents
 * [Technical Features](#-technical-features)
+* [Prerequisites](#️-prerequisites)
 * [Installation](#-installation)
 * [Usage](#-usage)
 * [Command Line Arguments](#-command-line-arguments)
 * [Pipes](#-pipes)
-* [Supported Media Types](#-supported-media-types)
+* [Supported Media Types](#️-supported-media-types)
+* [Performance Tips](#-performance-tips)
 
 ---
 
@@ -20,6 +31,18 @@ A low-level binary-to-text translator. Focused on deep parsing of media file str
 * **Multithreaded:** Producer-consumer architecture.
 * **Image and GIF rendering:** Powered by the **stb_image** library for fast and lightweight decoding.
 * **TrueColor:** Full 24-bit RGB ANSI support.
+
+### 🛠️ Prerequisites
+
+Before building, ensure you have the following installed:
+
+* **FFmpeg 8.1+** (specifically `libavcodec`, `libavformat`, `libswscale`)
+* **CMake 4.2+**
+* **C++20 Compiler**
+> [!IMPORTANT]
+> **Terminal Support:** To see the video in high quality, you **MUST** use a terminal that supports **TrueColor (24-bit RGB)**. 
+> Recommended: **Alacritty**, **Kitty**, **iTerm2**, or **Windows Terminal**. 
+> *Standard macOS Terminal.app does NOT support TrueColor and will display limited colors.*
 
 ## 📦 Installation
 
@@ -73,3 +96,17 @@ The player supports a wide range of formats through a combination of **stb_image
 * **Videos:** `.mkv`, `.mp4`, `.mov`, `.avi`, `.flv`, `.webm`, and others.
 
 ---
+
+### ⚡ Performance Tips
+
+To get the most out of **Raw2ASCII**, especially for high-resolution video, consider the following:
+
+* **Terminal Choice:** Use a GPU-accelerated terminal like **Alacritty**, **Kitty**, or **iTerm2**. Standard terminals (like the default macOS Terminal) often struggle with high-frequency ANSI color updates.
+* **Threshold Tuning (`-t`):** Increase the similarity threshold (e.g., `-t10`) to skip rendering pixels that are nearly identical to the previous frame. This significantly reduces the CPU load and bandwidth used by the terminal.
+* **Font Size:** Reducing your terminal font size allows for higher `-w` (width) and `-h` (height) values, resulting in much higher "resolution" ASCII art.
+
+---
+
+## 📄 License
+
+This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
