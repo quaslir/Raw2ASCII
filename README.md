@@ -4,11 +4,14 @@
 A low-level binary-to-text translator. Focused on deep parsing of media file structures and high-speed, buffer-optimized graphical output directly to the console.
 
 ## 🎬 Showcase
-<img width="498" height="533" alt="Screenshot 2026-03-27 at 15 55 13" src="https://github.com/user-attachments/assets/557811d2-378b-4526-a1ad-c9fc38dbd9e3" />
 
+<p align="center">
+  <img width="498" src="https://github.com/user-attachments/assets/557811d2-378b-4526-a1ad-c9fc38dbd9e3" alt="Raw2ASCII Screenshot" />
+</p>
 
-
-<video src = "https://github.com/user-attachments/assets/49e06c54-7f3a-4716-be86-4acea979c99d"/>
+<p align="center">
+  <video src="https://github.com/user-attachments/assets/49e06c54-7f3a-4716-be86-4acea979c99d" width="100%" autoplay loop muted playsinline></video>
+</p>
 
 
 
