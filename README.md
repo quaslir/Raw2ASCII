@@ -1,5 +1,5 @@
 # Raw2ASCII
-
+![Build Status](https://github.com/quaslir/Raw2ASCII/actions/workflows/ci.yml/badge.svg)
 ## Overview
 A low-level binary-to-text translator. Focused on deep parsing of media file structures and high-speed, buffer-optimized graphical output directly to the console.
 
