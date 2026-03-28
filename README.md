@@ -10,20 +10,25 @@ A low-level binary-to-text translator. Focused on deep parsing of media file str
 </p>
 
 <p align="center">
-  <video src="https://github.com/user-attachments/assets/49e06c54-7f3a-4716-be86-4acea979c99d" width="100%" autoplay loop muted playsinline></video>
+  <video src="https://github.com/user-attachments/assets/49e06c54-7f3a-4716-be86-4acea979c99d" width="100%" autoplay loop muted playsinline title = ""></video>
 </p>
 
 
 
 ## 📋 Table of Contents
-* [Technical Features](#-technical-features)
-* [Prerequisites](#️-prerequisites)
-* [Installation](#-installation)
-* [Usage](#-usage)
-* [Command Line Arguments](#-command-line-arguments)
-* [Pipes](#-pipes)
-* [Supported Media Types](#️-supported-media-types)
-* [Performance Tips](#-performance-tips)
+- [Raw2ASCII](#raw2ascii)
+  - [Overview](#overview)
+  - [🎬 Showcase](#-showcase)
+  - [📋 Table of Contents](#-table-of-contents)
+  - [🛠 Technical Features](#-technical-features)
+    - [🛠️ Prerequisites](#️-prerequisites)
+  - [📦 Installation](#-installation)
+  - [🚀 Usage](#-usage)
+    - [🎮 Command Line Arguments](#-command-line-arguments)
+    - [🔗 Pipes](#-pipes)
+    - [🎞️ Supported media types](#️-supported-media-types)
+    - [⚡ Performance Tips](#-performance-tips)
+  - [📄 License](#-license)
 
 ---
 

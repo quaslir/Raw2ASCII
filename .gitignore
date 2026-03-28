@@ -1,2 +1,4 @@
-/build
-/testImages.DS_Store
+build
+tests/build
+.DS_Store
+.vscode
