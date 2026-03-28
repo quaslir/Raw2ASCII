@@ -16,6 +16,6 @@ private:
   utils::Options opts;
 
 public:
-  Gif(std::string &&buffer, const utils::Options &options);
+  Gif(std::string &&buffer, utils::Options &&options);
   void renderGif(void) const;
 };

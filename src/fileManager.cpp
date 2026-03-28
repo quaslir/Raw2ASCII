@@ -13,8 +13,9 @@
 #include <string_view>
 #define GIF_SIGNATURE 6
 namespace ext {
-FileManager::FileManager(utils::Options &&options) {
-  opts = options;
+FileManager::FileManager(utils::Options &&options) : opts(std::move(options)) {}
+
+void FileManager::open(void) {
   if (opts.readStdin) {
     processFromStdin();
   }
@@ -24,18 +25,18 @@ FileManager::FileManager(utils::Options &&options) {
   }
 }
 
-void FileManager::processFromFile(void) const {
+void FileManager::processFromFile(void) {
   std::ifstream file(opts.file, std::ios::binary | std::ios::ate);
   try {
     if (isGif(file)) {
       std::string data = utils::readFile(opts.file);
       handleGif(std::move(data));
     } else if (isImg(opts.file)) {
-      Image img(opts);
+      Image img(std::move(opts));
       img.renderImage();
     } else {
 
-      VideoDecoder video{opts};
+      VideoDecoder video(std::move(opts));
       video.open();
       video.renderVideo();
     }
@@ -44,7 +45,7 @@ void FileManager::processFromFile(void) const {
   }
 }
 
-void FileManager::processFromStdin(void) const {
+void FileManager::processFromStdin(void) {
   std::string header;
   constexpr std::size_t chunk = 1024 * 1024;
   header.resize(chunk);
@@ -61,12 +62,12 @@ void FileManager::processFromStdin(void) const {
     } else if (isImg(header, 1)) {
       std::string data = utils::readStdin();
       header.append(data);
-      Image img(opts, std::move(header));
+      Image img(std::move(opts), std::move(header));
       img.renderImage();
     }
 
     else {
-      VideoDecoder video{opts};
+      VideoDecoder video(std::move(opts));
       video.setHeader(std::move(header));
       video.open();
       video.renderVideo();
@@ -99,8 +100,8 @@ bool isGif(const std::vector<char> &file) {
   return view == "GIF87a" || view == "GIF89a";
 }
 
-void FileManager::handleGif(std::string &&data) const {
-  Gif gif(std::move(data), opts);
+void FileManager::handleGif(std::string &&data) {
+  Gif gif(std::move(data), std::move(opts));
   gif.renderGif();
 }
 

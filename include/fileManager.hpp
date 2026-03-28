@@ -6,14 +6,15 @@ namespace ext {
 
 struct FileManager {
 
-  explicit FileManager(utils::Options &&opts);
+  explicit FileManager(utils::Options &&options);
+  void open(void);
 
 private:
   utils::Options opts;
-  void processFromStdin(void) const;
-  void processFromFile(void) const;
+  void processFromStdin(void);
+  void processFromFile(void);
 
-  void handleGif(std::string &&data) const;
+  void handleGif(std::string &&data);
 };
 bool isGif(std::ifstream &file);
 bool isGif(const std::vector<char> &file);

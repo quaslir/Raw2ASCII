@@ -6,10 +6,23 @@
 #include <unistd.h>
 namespace utils {
 
-Options::Options(int argc, char *argv[]) {
-  setFullScreen();
-  parse(argc, argv);
+Options &Options::operator=(Options &&opts) {
+  if (this != &opts) {
+    this->braille = opts.braille;
+    this->file = std::move(opts.file);
+    this->fps = opts.fps;
+    this->help = opts.help;
+    this->threshold = opts.threshold;
+    this->targetHeight = opts.targetHeight;
+    this->targetWidth = opts.targetWidth;
+    this->outputPath = std::move(opts.outputPath);
+    this->readStdin = opts.readStdin;
+  }
+
+  return *this;
 }
+
+Options::Options() { setFullScreen(); }
 void Options::parse(int argc, char *argv[]) {
 
   if (argc < 2) {
@@ -31,8 +44,8 @@ void Options::parse(int argc, char *argv[]) {
       try {
         size_t pos;
         int w = std::stoi(std::string{param.substr(index)}, &pos);
-        if(pos != param.substr(index).length()) {
-           throw std::invalid_argument("invalid value");
+        if (pos != param.substr(index).length()) {
+          throw std::invalid_argument("invalid value");
         }
         targetWidth = w;
       } catch (...) {
@@ -47,7 +60,7 @@ void Options::parse(int argc, char *argv[]) {
       try {
         size_t pos;
         int h = std::stoi(std::string{param.substr(index)}, &pos);
-        if(pos != param.substr(index).length()) {
+        if (pos != param.substr(index).length()) {
           throw std::invalid_argument("invalid value");
         }
         targetHeight = h;

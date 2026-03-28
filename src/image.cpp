@@ -9,27 +9,27 @@
 #include <string>
 #include <sys/ioctl.h>
 #include <unistd.h>
-Image::Image(const utils::Options &options) : data(nullptr, stbi_image_free) {
+Image::Image(utils::Options &&options) : data(nullptr, stbi_image_free) {
 
   unsigned char *raw =
       stbi_load(options.file.c_str(), &width, &height, &channels, 4);
   try {
     processRaw(raw);
-    opts = options;
+    opts = std::move(options);
 
   } catch (const std::exception &err) {
     std::cerr << err.what() << '\n';
   }
 }
 
-Image::Image(const utils::Options &options, std::string &&buffer)
+Image::Image(utils::Options &&options, std::string &&buffer)
     : data(nullptr, stbi_image_free) {
   unsigned char *raw = stbi_load_from_memory(
       reinterpret_cast<const stbi_uc *>(buffer.data()),
       static_cast<int>(buffer.size()), &width, &height, &channels, 4);
   try {
     processRaw(raw);
-    opts = options;
+    opts = std::move(options);
 
   } catch (const std::exception &err) {
     std::cerr << err.what() << '\n';
@@ -53,34 +53,21 @@ void Image::renderImage(void) const {
 
   std::string buffer;
 
-  if (opts.braille) {
-
-  } else {
-
-    for (int y = 0; y < height; y += stepY * 2) {
-      RGB prevTop;
-      RGB prevBottom;
-      prevTop.alpha = 123;
-      prevBottom.alpha = 123;
-      for (int x = 0; x < width; x += stepX) {
-
-        const RGB &top = data[y * width + x];
-        int bottomIdx = (y + stepY < height) ? (y + stepY) : y;
-        const RGB &bottom = data[(bottomIdx)*width + x];
-        top.printPixel(buffer, bottom, prevTop, prevBottom, opts.threshold);
-      }
-      buffer += "\x1b[0m\n";
+  for (int y = 0; y < height; y += stepY * 2) {
+    RGB prevTop;
+    RGB prevBottom;
+    prevTop.alpha = 123;
+    prevBottom.alpha = 123;
+    for (int x = 0; x < width; x += stepX) {
+      const RGB &top = data[y * width + x];
+      int bottomIdx = (y + stepY < height) ? (y + stepY) : y;
+      const RGB &bottom = data[(bottomIdx)*width + x];
+      top.printPixel(buffer, bottom, prevTop, prevBottom, opts.threshold);
     }
+    buffer += "\033[0m\n";
   }
 
   if (opts.outputPath.empty())
     std::cout << buffer;
-  std::stringstream ss(buffer);
-  saveToFile(ss);
-}
-
-void Image::saveToFile(std::stringstream &ss) const {
-  std::ofstream file(opts.outputPath);
-
-  file << ss.str();
+  opts.writeFile(std::move(buffer));
 }

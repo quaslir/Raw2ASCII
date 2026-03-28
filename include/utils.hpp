@@ -15,10 +15,13 @@ struct Options {
   bool help = false;
   std::string file = "";
   std::string outputPath = "";
-  Options() {}
-  Options(int argc, char *argv[]);
+
+  Options();
+  Options &operator=(Options &&opts);
+  Options(Options &&) = default;
+
   void parse(int argc, char *argv[]);
-  Options &operator=(const Options &) = default;
+
   void setFullScreen(void);
   std::string renderBraille(const std::vector<RGB> &frame) const;
   void writeFile(std::string &&buffer) const;

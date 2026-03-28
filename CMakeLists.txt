@@ -7,7 +7,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 if(NOT CMAKE_BUILD_TYPE)
 set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build" FORCE)
 endif()
-set(CMAKE_CXX_FLAGS_RELEASE "-O3 -march=native -DNDEBUG")
 
 
 file(GLOB_RECURSE SOURCES "src/*.cpp")
@@ -20,6 +19,7 @@ target_include_directories(external_libs PRIVATE external)
 
 
 add_executable(${PROJECT_NAME} ${SOURCES})
+
 
 target_link_libraries(${PROJECT_NAME} PRIVATE external_libs)
 
@@ -42,30 +42,18 @@ set_target_properties(${PROJECT_NAME} PROPERTIES CXX_CPPCHECK "${CPPCHECK_COMMAN
 
 endif()
 
-find_program(CLANG_TIDY_EXE NAMES "clang-tidy")
-
-if(CLANG_TIDY_EXE)
-
-
-
-endif()
-
-endif()
-
-
-
-
-
-
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
-
-
-
 target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -Wpedantic -g3 -fsanitize=address)
 target_link_libraries(${PROJECT_NAME} PRIVATE -fsanitize=address)
 
+elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
+target_compile_options(${PROJECT_NAME} PRIVATE 
+    -O3  
+    -march=native
+    -flto
+    -fomit-frame-pointer
+)
+target_link_libraries(${PROJECT_NAME} PRIVATE -flto)
+endif()
 
 target_include_directories(${PROJECT_NAME} PRIVATE include external)
 

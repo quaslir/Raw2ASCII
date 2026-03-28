@@ -12,11 +12,10 @@ private:
   StbPtr data;
   utils::Options opts;
 
-  void saveToFile(std::stringstream &ss) const;
   void processRaw(unsigned char *raw);
 
 public:
-  explicit Image(const utils::Options &options);
-  Image(const utils::Options &options, std::string &&buffer);
+  explicit Image(utils::Options &&options);
+  Image(utils::Options &&options, std::string &&buffer);
   void renderImage(void) const;
 };

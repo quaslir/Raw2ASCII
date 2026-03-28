@@ -84,7 +84,8 @@ void VideoDecoder::open(void) {
                        AV_PIX_FMT_RGBA, opts.targetWidth, opts.targetHeight, 1);
 }
 
-VideoDecoder::VideoDecoder(const utils::Options &options) : opts(options) {
+VideoDecoder::VideoDecoder(utils::Options &&options)
+    : opts(std::move(options)) {
   formatContext = avformat_alloc_context();
 }
 

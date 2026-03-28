@@ -61,7 +61,7 @@ private:
 public:
   void open(void);
   void setHeader(std::string &&headerBuffer);
-  explicit VideoDecoder(const utils::Options &options);
+  explicit VideoDecoder(utils::Options &&options);
   static int read_packet(void *opaque, uint8_t *buf, int buf_size);
   void renderVideo(void);
   ~VideoDecoder();

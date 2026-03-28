@@ -9,7 +9,7 @@
 #include <thread>
 #include <vector>
 
-Gif::Gif(std::string &&buffer, const utils::Options &options) {
+Gif::Gif(std::string &&buffer, utils::Options &&options) {
   int w, h, count, channels;
   int *delays = nullptr;
 
@@ -39,7 +39,7 @@ Gif::Gif(std::string &&buffer, const utils::Options &options) {
 
   stbi_image_free(delays);
 
-  opts = options;
+  opts = std::move(options);
 };
 
 void Gif::renderGif(void) const {
@@ -48,8 +48,10 @@ void Gif::renderGif(void) const {
   int stepY = height / opts.targetHeight;
 
   std::cout << "\033[2J\033[?25l";
-
+  auto next_frame = std::chrono::steady_clock::now();
   for (size_t i = 0; i < data.size(); i++) {
+    next_frame += std::chrono::milliseconds(data[i].delay);
+
     std::string buffer = "\033[H";
     if (opts.braille) {
       buffer += opts.renderBraille(data[i].frame);
@@ -73,7 +75,7 @@ void Gif::renderGif(void) const {
     if (opts.outputPath.empty()) {
 
       std::cout << buffer;
-      std::this_thread::sleep_for(std::chrono::milliseconds(data[i].delay));
+      std::this_thread::sleep_until(next_frame);
     } else {
       opts.writeFile(std::move(buffer));
     }
