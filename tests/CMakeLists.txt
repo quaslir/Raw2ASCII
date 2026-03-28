@@ -17,3 +17,8 @@ add_executable(rgb_test ../src/rgb.cpp ../src/utils.cpp src/test_rgb.cpp)
 target_link_libraries(rgb_test PRIVATE gtest_main gmock)
 target_compile_options(rgb_test PRIVATE -Wall -Wextra -Wpedantic)
 target_include_directories(rgb_test PRIVATE ../include)
+
+add_executable(utils_test ../src/rgb.cpp ../src/utils.cpp src/test_utils.cpp)
+target_link_libraries(utils_test PRIVATE gtest_main gmock)
+target_compile_options(utils_test PRIVATE -Wall -Wextra -Wpedantic -g3)
+target_include_directories(utils_test PRIVATE ../include)

@@ -27,9 +27,13 @@ void Options::parse(int argc, char *argv[]) {
 
     if ((param.starts_with("-w")) || (param.starts_with("--width="))) {
       size_t index = param.starts_with("-w") ? std::string{"-w"}.length()
-                                             : std::string{"--width"}.length();
+                                             : std::string{"--width="}.length();
       try {
-        int w = std::stoi(std::string{param.substr(index)});
+        size_t pos;
+        int w = std::stoi(std::string{param.substr(index)}, &pos);
+        if(pos != param.substr(index).length()) {
+           throw std::invalid_argument("invalid value");
+        }
         targetWidth = w;
       } catch (...) {
         throw std::invalid_argument("invalid value");
@@ -41,7 +45,11 @@ void Options::parse(int argc, char *argv[]) {
                          ? std::string{"-h"}.length()
                          : std::string{"--height="}.length();
       try {
-        int h = std::stoi(std::string{param.substr(index)});
+        size_t pos;
+        int h = std::stoi(std::string{param.substr(index)}, &pos);
+        if(pos != param.substr(index).length()) {
+          throw std::invalid_argument("invalid value");
+        }
         targetHeight = h;
       } catch (...) {
         throw std::invalid_argument("invalid value");

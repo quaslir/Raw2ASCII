@@ -8,7 +8,6 @@ namespace utils {
 struct Options {
   int targetWidth = 1;
   int targetHeight = 1;
-  bool fullscreen = false;
   bool braille = false;
   bool readStdin = false;
   int threshold = 0;
