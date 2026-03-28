@@ -10,7 +10,7 @@ A low-level binary-to-text translator. Focused on deep parsing of media file str
 </p>
 
 <p align="center">
-  <video src="https://github.com/user-attachments/assets/49e06c54-7f3a-4716-be86-4acea979c99d" width="100%" autoplay loop muted playsinline title = ""></video>
+  <video src="https://github.com/user-attachments/assets/49e06c54-7f3a-4716-be86-4acea979c99d" width="100%" autoplay loop muted playsinline alt="Nasa video rendered in terminal"></video>
 </p>
 
 
