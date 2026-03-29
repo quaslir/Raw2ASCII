@@ -34,7 +34,6 @@ void RGB::printPixel(std::string &str, const RGB &bottom, RGB &prevTop,
     str += "\033[48;2;" + std::to_string(Rb) + ';' +
            std::to_string(Gb) + ';' + std::to_string(Bb) + "m▀";
            prevBottom = RGB(Rb, Gb, Bb);
-
            return;
   }
 

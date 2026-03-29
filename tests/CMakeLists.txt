@@ -22,3 +22,8 @@ add_executable(utils_test ../src/rgb.cpp ../src/utils.cpp src/test_utils.cpp)
 target_link_libraries(utils_test PRIVATE gtest_main gmock)
 target_compile_options(utils_test PRIVATE -Wall -Wextra -Wpedantic -g3)
 target_include_directories(utils_test PRIVATE ../include)
+
+add_executable(eight_bit_test ../src/rgb.cpp ../src/utils.cpp ../src/color8bit.cpp src/test_eight_bits.cpp)
+target_link_libraries(eight_bit_test PRIVATE gtest_main gmock)
+target_compile_options(eight_bit_test PRIVATE -Wall -Wextra -Wpedantic -g3)
+target_include_directories(eight_bit_test PRIVATE ../include)
