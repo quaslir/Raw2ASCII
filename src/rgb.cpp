@@ -14,21 +14,35 @@ bool RGB::operator!=(const RGB &other) const { return !(*this == other); }
 
 void RGB::printPixel(std::string &str, const RGB &bottom, RGB &prevTop,
                      RGB &prevBottom, int th) const {
-
-  int Rt = (r * alpha + 128) / 255;
+  bool topTransparent = alpha < 10;
+  bool bottomTransparent = bottom.alpha < 10;
+  bool transparencyChanged = ((topTransparent != (prevTop.alpha < 10)) ||
+                              (bottomTransparent != (bottom.alpha < 10)));
+  if (!transparencyChanged && utils::isSimilar(*this, prevTop, th) &&
+      utils::isSimilar(bottom, prevBottom, th)) {
+    str += ((topTransparent && bottomTransparent) ? " " : "▀");
+    return;
+  } 
+   int Rt = (r * alpha + 128) / 255;
   int Gt = (g * alpha + 128) / 255;
   int Bt = (b * alpha + 128) / 255;
   int Rb = (bottom.r * bottom.alpha + 128) / 255;
   int Gb = (bottom.g * bottom.alpha + 128) / 255;
   int Bb = (bottom.b * bottom.alpha + 128) / 255;
-  bool topTransparent = alpha < 10;
-  bool bottomTransparent = bottom.alpha < 10;
-  bool transparencyChanged = ((topTransparent != (prevTop.alpha < 10)) ||
-                              (bottomTransparent != (bottom.alpha < 10)));
-  if (utils::isSimilar(*this, prevTop, th) &&
-      utils::isSimilar(bottom, prevBottom, th) && !transparencyChanged) {
-    str += ((topTransparent && bottomTransparent) ? " " : "▀");
-    return;
+  
+  if(!transparencyChanged && utils::isSimilar(*this, prevTop, th)) {
+    str += "\033[48;2;" + std::to_string(Rb) + ';' +
+           std::to_string(Gb) + ';' + std::to_string(Bb) + "m▀";
+           prevBottom = RGB(Rb, Gb, Bb);
+
+           return;
+  }
+
+  else if(!transparencyChanged && utils::isSimilar(bottom, prevBottom, th)) {
+     str += "\033[38;2;" + std::to_string(Rt) + ';' +
+           std::to_string(Gt) + ';' + std::to_string(Bb) + "m▀";
+           prevTop = RGB(Rt, Gt, Bt);
+           return;
   }
 
   if (topTransparent || bottomTransparent) {
@@ -37,6 +51,7 @@ void RGB::printPixel(std::string &str, const RGB &bottom, RGB &prevTop,
     prevBottom = RGB();
   } else {
 
+    
     str += "\033[38;2;" + std::to_string(Rt) + ';' + std::to_string(Gt) + ';' +
            std::to_string(Bt) + 'm' + "\033[48;2;" + std::to_string(Rb) + ';' +
            std::to_string(Gb) + ';' + std::to_string(Bb) + "m▀";

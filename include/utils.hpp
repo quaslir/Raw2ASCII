@@ -13,6 +13,7 @@ struct Options {
   int threshold = 0;
   bool fps = false;
   bool help = false;
+  bool eight_bit_mode = false;
   std::string file = "";
   std::string outputPath = "";
 

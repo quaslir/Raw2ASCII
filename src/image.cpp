@@ -1,5 +1,6 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "image.hpp"
+#include "color8bit.hpp"
 #include "stb_image.h"
 #include "utils.hpp"
 #include <fstream>
@@ -7,8 +8,6 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
-#include <sys/ioctl.h>
-#include <unistd.h>
 Image::Image(utils::Options &&options) : data(nullptr, stbi_image_free) {
 
   unsigned char *raw =
@@ -54,15 +53,18 @@ void Image::renderImage(void) const {
   std::string buffer;
 
   for (int y = 0; y < height; y += stepY * 2) {
-    RGB prevTop;
-    RGB prevBottom;
-    prevTop.alpha = 123;
-    prevBottom.alpha = 123;
+    RGB prevTop(255, 255, 255, 255);
+    RGB prevBottom(255, 255, 255, 255);
     for (int x = 0; x < width; x += stepX) {
       const RGB &top = data[y * width + x];
       int bottomIdx = (y + stepY < height) ? (y + stepY) : y;
       const RGB &bottom = data[(bottomIdx)*width + x];
-      top.printPixel(buffer, bottom, prevTop, prevBottom, opts.threshold);
+      if (!opts.eight_bit_mode) {
+        top.printPixel(buffer, bottom, prevTop, prevBottom, opts.threshold);
+      } else {
+
+        eight_bit::printPixel(buffer, top, bottom, prevTop, prevBottom);
+      }
     }
     buffer += "\033[0m\n";
   }
