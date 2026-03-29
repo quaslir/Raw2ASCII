@@ -1,4 +1,5 @@
 #include "gif.hpp"
+#include "color8bit.hpp"
 #include "stb_image.h"
 #include <chrono>
 #include <cstring>
@@ -8,7 +9,6 @@
 #include <string>
 #include <thread>
 #include <vector>
-
 Gif::Gif(std::string &&buffer, utils::Options &&options) {
   int w, h, count, channels;
   int *delays = nullptr;
@@ -57,17 +57,19 @@ void Gif::renderGif(void) const {
       buffer += opts.renderBraille(data[i].frame);
     } else {
       for (int y = 0; y < height; y += stepY * 2) {
-        RGB prevTop(0, 0, 0);
-        RGB prevBottom(0, 0, 0);
-        prevTop.alpha = 0;
-        prevBottom.alpha = 0;
+        RGB prevTop;
+        RGB prevBottom;
         for (int x = 0; x < width; x += stepX) {
 
           const RGB &top = data[i].frame[y * width + x];
           int bottomIdx = (y + stepY < height) ? (y + stepY) : y;
           const RGB &bottom = data[i].frame[(bottomIdx)*width + x];
 
-          top.printPixel(buffer, bottom, prevTop, prevBottom, opts.threshold);
+          if (!opts.eight_bit_mode) {
+            top.printPixel(buffer, bottom, prevTop, prevBottom, opts.threshold);
+          } else
+            eight_bit::printPixel(buffer, top, bottom, prevTop, prevBottom,
+                                  opts.threshold);
         }
         buffer += "\033[0m\n";
       }

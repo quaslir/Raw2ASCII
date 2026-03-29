@@ -17,6 +17,7 @@ Options &Options::operator=(Options &&opts) {
     this->targetWidth = opts.targetWidth;
     this->outputPath = std::move(opts.outputPath);
     this->readStdin = opts.readStdin;
+    this->eight_bit_mode = opts.eight_bit_mode;
   }
 
   return *this;
@@ -92,6 +93,8 @@ void Options::parse(int argc, char *argv[]) {
       } catch (...) {
         throw std::invalid_argument("invalid value");
       }
+    } else if (param == "--8bit" || param == "-8") {
+      eight_bit_mode = true;
     } else {
       if (param == "-") {
         readStdin = true;

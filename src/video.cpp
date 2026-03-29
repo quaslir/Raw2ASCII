@@ -1,4 +1,5 @@
 #include "video.hpp"
+#include "color8bit.hpp"
 #include <chrono>
 #include <cstring>
 #include <fstream>
@@ -164,17 +165,21 @@ std::string VideoDecoder::renderStream(const RGB *currentFrame) const {
   currentFrameBuffer.reserve(opts.targetHeight * opts.targetWidth * 20);
 
   for (int y = 0; y < opts.targetHeight; y += 2) {
-    RGB prevBottom;
-    RGB prevTop;
+    RGB prevBottom(255, 255, 255, 255);
+    RGB prevTop(255, 255, 255, 255);
     for (int x = 0; x < opts.targetWidth; x++) {
 
       const RGB &top = currentFrame[y * opts.targetWidth + x];
       const RGB &bottom = y + 1 < opts.targetHeight
                               ? currentFrame[(y + 1) * opts.targetWidth + x]
                               : RGB();
-
-      top.printPixel(currentFrameBuffer, bottom, prevTop, prevBottom,
-                     opts.threshold);
+      if (!opts.eight_bit_mode) {
+        top.printPixel(currentFrameBuffer, bottom, prevTop, prevBottom,
+                       opts.threshold);
+      } else {
+        eight_bit::printPixel(currentFrameBuffer, top, bottom, prevTop,
+                              prevBottom, opts.threshold);
+      }
     }
     currentFrameBuffer += "\033[0m\n";
   }
