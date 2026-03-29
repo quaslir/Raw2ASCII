@@ -20,10 +20,9 @@ void printPixel(std::string &str, const RGB &top, const RGB &bottom,
   } else {
     str += "\033[38;5;" + std::to_string(topColor) + 'm' + "\033[48;5;" +
            std::to_string(bottomColor) + "m▀";
-
+  }
     prevTop = top;
     prevBottom = bottom;
-  }
 }
 
 bool isSimilar(uint8_t cur, uint8_t prev, int th) {
