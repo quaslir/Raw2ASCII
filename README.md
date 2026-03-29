@@ -84,9 +84,10 @@ To run the player, simply provide the path to a media file. If no path is provid
 | `-w` | `--width=` | Target width in characters | full width | `-w120` |
 | `-h` | `--height=` | Target height in characters | 80% of full height | `--height=60` |
 | `-o` | `--output=` | Save standard output to provided file | `stdout` | `--output=dump.txt` |
-| `-b` | `--braille` | Enable Braille rendering method | Block | `-b` |
-| `-t` | `--threshold=` | Set similarity threshold between colors to increase FPS | 0 | `-t5` |
+| `-b` | `--braille` | Enable Braille rendering method | Off | `-b` |
+| `-t` | `--threshold=` | Set similarity threshold between colors to increase FPS | 1 | `-t5` |
 | `-f` | `--fps` | Enable real-time FPS rendering | Off | `-f` |
+| `-8` | `--8bit` | Use xterm-256color (8-bit) rendering mode | Off | `-8` |
 
 ### 🔗 Pipes
 `RAW2ASCII` also supports pipes, which is extremely useful for processing remote streams or chaining tools. For example, you can pipe an image or video directly from the web:
